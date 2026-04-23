@@ -11,4 +11,4 @@ export const API_ORIGIN =
         ? trimmed.replace(/\/$/, '')
         : import.meta.env.DEV
           ? ''
-          : ''; // Default to relative paths for production if not specified
+          : 'https://dep-server-lwn2.onrender.com'; // Production fallback URL
