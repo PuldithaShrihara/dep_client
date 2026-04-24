@@ -9,4 +9,6 @@ const trimmed = typeof fromEnv === 'string' ? fromEnv.trim() : '';
 export const API_ORIGIN =
     trimmed !== ''
         ? trimmed.replace(/\/$/, '')
-        : ''; // Use relative path by default
+        : import.meta.env.DEV
+          ? ''
+          : 'https://dep-server-lwn2.onrender.com';
