@@ -7,6 +7,7 @@ import {
     Plus, Search, Filter, ArrowLeft, MoreHorizontal,
     MessageSquare, Clock, User, ChevronDown
 } from 'lucide-react';
+import { API_ORIGIN } from '../config';
 
 const HrTaskHub = () => {
     const [searchParams] = useSearchParams();
@@ -38,9 +39,9 @@ const HrTaskHub = () => {
             setLoading(true);
             const token = localStorage.getItem('token');
             const [areasRes, completionsRes, membersRes] = await Promise.all([
-                axios.get('/api/hr/areas', { headers: { 'x-auth-token': token } }),
-                axios.get(`/api/hr/completions?month=${month}&year=${year}`, { headers: { 'x-auth-token': token } }),
-                axios.get('/api/hr/members', { headers: { 'x-auth-token': token } })
+                axios.get(`${API_ORIGIN}/api/hr/areas`, { headers: { 'x-auth-token': token } }),
+                axios.get(`${API_ORIGIN}/api/hr/completions?month=${month}&year=${year}`, { headers: { 'x-auth-token': token } }),
+                axios.get(`${API_ORIGIN}/api/hr/members`, { headers: { 'x-auth-token': token } })
             ]);
             setAreas(areasRes.data);
             setCompletions(completionsRes.data);
@@ -61,7 +62,7 @@ const HrTaskHub = () => {
         if (existing) {
             if (!window.confirm('Remove this completion record?')) return;
             try {
-                await axios.delete(`/api/hr/completions/${existing.completionId}`, {
+                await axios.delete(`${API_ORIGIN}/api/hr/completions/${existing.completionId}`, {
                     headers: { 'x-auth-token': token }
                 });
                 setCompletions(completions.filter(c => c.completionId !== existing.completionId));
@@ -73,7 +74,7 @@ const HrTaskHub = () => {
             if (!memberId) return alert('No HR members found to assign task.');
 
             try {
-                const res = await axios.post('/api/hr/completions', {
+                const res = await axios.post(`${API_ORIGIN}/api/hr/completions`, {
                     taskId,
                     memberId,
                     observedByMemberId: draft.observedByMemberId || memberId,
@@ -104,7 +105,7 @@ const HrTaskHub = () => {
             if (field === 'observedByMemberId') body.observedByMemberId = value;
             if (field === 'remarks') body.remarks = value;
 
-            const res = await axios.patch(`/api/hr/completions/${completionId}`, body, {
+            const res = await axios.patch(`${API_ORIGIN}/api/hr/completions/${completionId}`, body, {
                 headers: { 'x-auth-token': token }
             });
 

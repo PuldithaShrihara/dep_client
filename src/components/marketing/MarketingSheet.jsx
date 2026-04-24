@@ -5,6 +5,7 @@ import {
     FileText, Clock, ChevronDown, CheckSquare, Cloud, Flag, File,
     MoreHorizontal
 } from 'lucide-react';
+import { API_ORIGIN } from '../../config';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -98,9 +99,11 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
     ];
 
     const handleInputChange = (index, key, value) => {
-        const newTasks = [...tasks];
-        newTasks[index][key] = value;
-        setTasks(newTasks);
+        setTasks(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [key]: value };
+            return next;
+        });
     };
 
     const addRow = () => {
@@ -145,9 +148,9 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
         setSaving(true);
         try {
             if (isNew) {
-                const res = await axios.post('/api/plans', {
+                const res = await axios.post(`${API_ORIGIN}/api/plans`, {
                     ...planData,
-                    tasks,
+                    tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim()),
                     department: deptId
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -155,8 +158,8 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                 alert('Plan created successfully');
                 if (onSuccess) onSuccess(res.data);
             } else {
-                const res = await axios.put(`/api/plans/${planId}/tasks`, {
-                    tasks,
+                const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
+                    tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim()),
                     ...planData
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -192,6 +195,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                             <Plus size={14} /> Add Row
                         </button>
                         <button
+                            type="button"
                             onClick={handleSave}
                             disabled={saving}
                             className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all text-xs font-black shadow-lg shadow-indigo-600/20"

@@ -4,6 +4,7 @@ import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
     FileText, Clock, ChevronDown, CheckSquare, Cloud, DollarSign, File
 } from 'lucide-react';
+import { API_ORIGIN } from '../../config';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -122,9 +123,11 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
     ];
 
     const handleInputChange = (index, key, value) => {
-        const newTasks = [...tasks];
-        newTasks[index][key] = value;
-        setTasks(newTasks);
+        setTasks(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [key]: value };
+            return next;
+        });
     };
 
     const addRow = () => {
@@ -157,7 +160,7 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
         setSaving(true);
         try {
             if (isNew) {
-                const res = await axios.post('/api/plans', {
+                const res = await axios.post(`${API_ORIGIN}/api/plans`, {
                     ...planData,
                     tasks: tasks.filter(t => t.product || t.mediaType),
                     department: deptId
@@ -167,8 +170,8 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                 alert('Finance Plan created successfully');
                 if (onSuccess) onSuccess(res.data);
             } else {
-                const res = await axios.put(`/api/plans/${planId}/tasks`, {
-                    tasks,
+                const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
+                    tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim()),
                     ...planData
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -204,6 +207,7 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                             <Plus size={14} /> Add Row
                         </button>
                         <button
+                            type="button"
                             onClick={handleSave}
                             disabled={saving}
                             className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all text-xs font-black shadow-lg shadow-emerald-600/20"

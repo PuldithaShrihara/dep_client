@@ -5,6 +5,7 @@ import {
     Edit2, Trash2, Mail, Shield, MapPin,
     CheckCircle2, XCircle, Loader2, X, AlertCircle
 } from 'lucide-react';
+import { API_ORIGIN } from '../../config';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -39,7 +40,7 @@ const UserManagement = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('/api/users', {
+            const res = await axios.get(`${API_ORIGIN}/api/users`, {
                 headers: { 'x-auth-token': localStorage.getItem('token') }
             });
             setUsers(res.data);
@@ -104,12 +105,12 @@ const UserManagement = () => {
                     delete updateData.password;
                     delete updateData.confirmPassword;
                 }
-                const res = await axios.patch(`/api/users/${selectedUser._id}`, updateData, {
+                const res = await axios.patch(`${API_ORIGIN}/api/users/${selectedUser._id}`, updateData, {
                     headers: { 'x-auth-token': token }
                 });
                 setUsers(users.map(u => u._id === selectedUser._id ? res.data : u));
             } else {
-                const res = await axios.post('/api/users', dataToSend, {
+                const res = await axios.post(`${API_ORIGIN}/api/users`, dataToSend, {
                     headers: { 'x-auth-token': token }
                 });
                 setUsers([...users, res.data]);
@@ -125,7 +126,7 @@ const UserManagement = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
         try {
-            await axios.delete(`/api/users/${id}`, {
+            await axios.delete(`${API_ORIGIN}/api/users/${id}`, {
                 headers: { 'x-auth-token': localStorage.getItem('token') }
             });
             setUsers(users.filter(u => u._id !== id));

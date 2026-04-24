@@ -7,6 +7,7 @@ import {
     Building2, Phone, Fingerprint, FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_ORIGIN } from '../../config';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -58,7 +59,7 @@ const NewEmployeeSheet = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const res = await axios.get(`/api/new-employees?month=${month}&year=${year}`, {
+            const res = await axios.get(`${API_ORIGIN}/api/new-employees?month=${month}&year=${year}`, {
                 headers: { 'x-auth-token': token }
             });
             
@@ -80,9 +81,11 @@ const NewEmployeeSheet = () => {
     };
 
     const handleInputChange = (index, key, value) => {
-        const newEntries = [...entries];
-        newEntries[index][key] = value;
-        setEntries(newEntries);
+        setEntries(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [key]: value };
+            return next;
+        });
     };
 
     const addRow = () => {
@@ -99,7 +102,7 @@ const NewEmployeeSheet = () => {
             if (!window.confirm('Delete this record permanently?')) return;
             try {
                 const token = localStorage.getItem('token');
-                await axios.delete(`/api/new-employees/${entry.id}`, {
+                await axios.delete(`${API_ORIGIN}/api/new-employees/${entry.id}`, {
                     headers: { 'x-auth-token': token }
                 });
                 toast.success('Record removed');
@@ -120,7 +123,7 @@ const NewEmployeeSheet = () => {
         const toastId = toast.loading('Synchronizing data...');
         try {
             const token = localStorage.getItem('token');
-            await axios.post('/api/new-employees/save', {
+            await axios.post(`${API_ORIGIN}/api/new-employees/save`, {
                 month,
                 year,
                 entries: validEntries

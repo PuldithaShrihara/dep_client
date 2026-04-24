@@ -5,6 +5,7 @@ import {
     FileText, Clock, ChevronDown, CheckSquare, Cloud, Flag, File,
     MoreHorizontal
 } from 'lucide-react';
+import { API_ORIGIN } from '../../config';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -106,9 +107,11 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
     ];
 
     const handleInputChange = (index, key, value) => {
-        const newTasks = [...tasks];
-        newTasks[index][key] = value;
-        setTasks(newTasks);
+        setTasks(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [key]: value };
+            return next;
+        });
     };
 
     const addRow = () => {
@@ -141,7 +144,7 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
         setSaving(true);
         try {
             if (isNew) {
-                const res = await axios.post('/api/plans', {
+                const res = await axios.post(`${API_ORIGIN}/api/plans`, {
                     ...planData,
                     tasks: tasks.filter(t => t.product || t.mediaType), // Save only non-empty rows
                     department: deptId
@@ -151,7 +154,7 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                 alert('R&D Plan created successfully');
                 if (onSuccess) onSuccess(res.data);
             } else {
-                const res = await axios.put(`/api/plans/${planId}/tasks`, {
+                const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
                     tasks: tasks.filter(t => t.product || t.mediaType),
                     ...planData
                 }, {
@@ -188,6 +191,7 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                             <Plus size={14} /> Add Row
                         </button>
                         <button
+                            type="button"
                             onClick={handleSave}
                             disabled={saving}
                             className="flex items-center gap-2 px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-all text-xs font-black shadow-lg shadow-amber-600/20"
