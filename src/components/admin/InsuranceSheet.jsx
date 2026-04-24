@@ -4,13 +4,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Save, Plus, Trash2, ShieldPlus, Calendar,
     User, ArrowLeft, Loader2, AlertCircle,
-    Building2, Phone, Briefcase, FileText,
-    CheckCircle2, Clock, Search
+    Building2, FileText, CheckCircle2, Clock, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_ORIGIN } from '../../config';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
+
     useEffect(() => {
         if (textareaRef.current && value) {
             textareaRef.current.style.height = 'auto';
@@ -37,10 +38,12 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
 const InsuranceSheet = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+
     const month = parseInt(searchParams.get('month')) || new Date().getMonth() + 1;
     const year = parseInt(searchParams.get('year')) || new Date().getFullYear();
     const initialTab = searchParams.get('tab') || 'new-members';
     const namespace = searchParams.get('namespace') || 'life-insurance';
+
     const isGeneral = namespace === 'general-insurance';
     const registryTitle = isGeneral ? 'General' : 'Life';
 
@@ -71,35 +74,43 @@ const InsuranceSheet = () => {
     const fetchAppData = async () => {
         try {
             setLoading(true);
+            setError('');
+
             const token = localStorage.getItem('token');
+
             const [entriesRes, membersRes, deptsRes] = await Promise.all([
-                axios.get(`/api/insurance/entries?namespace=${namespace}&month=${month}&year=${year}`, {
+                axios.get(`${API_ORIGIN}/api/insurance/entries?namespace=${namespace}&month=${month}&year=${year}`, {
                     headers: { 'x-auth-token': token }
                 }),
-                axios.get('/api/hr/members', {
+                axios.get(`${API_ORIGIN}/api/hr/members`, {
                     headers: { 'x-auth-token': token }
                 }),
-                axios.get('/api/departments', {
+                axios.get(`${API_ORIGIN}/api/departments`, {
                     headers: { 'x-auth-token': token }
                 })
             ]);
-            
+
             const fetched = entriesRes.data.entriesByTab || {};
-            // Initialize missing tabs with empty rows
             const initialized = { ...fetched };
+
             tabs.forEach(tab => {
                 if (!initialized[tab.id] || initialized[tab.id].length === 0) {
-                    initialized[tab.id] = Array(3).fill({
-                        fullName: '', email: '', phone: '', department: '',
-                        status: 'In Progress', assignedDate: new Date().toISOString().split('T')[0],
-                        remarks: '', completed: false
-                    });
+                    initialized[tab.id] = Array.from({ length: 3 }, () => ({
+                        fullName: '',
+                        email: '',
+                        phone: '',
+                        department: '',
+                        status: 'In Progress',
+                        assignedDate: new Date().toISOString().split('T')[0],
+                        remarks: '',
+                        completed: false
+                    }));
                 }
             });
 
             setEntriesByTab(initialized);
-            setMembers(membersRes.data);
-            setDepartments(deptsRes.data);
+            setMembers(membersRes.data || []);
+            setDepartments(deptsRes.data || []);
         } catch (err) {
             console.error(err);
             setError('Failed to synchronize insurance registry.');
@@ -123,9 +134,14 @@ const InsuranceSheet = () => {
         setEntriesByTab(prev => {
             const currentTabEntries = [...(prev[activeTab] || [])];
             currentTabEntries.push({
-                fullName: '', email: '', phone: '', department: '',
-                status: 'In Progress', assignedDate: new Date().toISOString().split('T')[0],
-                remarks: '', completed: false
+                fullName: '',
+                email: '',
+                phone: '',
+                department: '',
+                status: 'In Progress',
+                assignedDate: new Date().toISOString().split('T')[0],
+                remarks: '',
+                completed: false
             });
             return { ...prev, [activeTab]: currentTabEntries };
         });
@@ -133,11 +149,13 @@ const InsuranceSheet = () => {
 
     const deleteRow = async (idx) => {
         const entry = entriesByTab[activeTab][idx];
-        if (entry.id) {
+
+        if (entry.id || entry._id) {
             if (!window.confirm('Wipe this record from the database?')) return;
+
             try {
                 const token = localStorage.getItem('token');
-                await axios.delete(`/api/insurance/entry/${entry.id}`, {
+                await axios.delete(`${API_ORIGIN}/api/insurance/entry/${entry.id || entry._id}`, {
                     headers: { 'x-auth-token': token }
                 });
                 toast.success('Record purged');
@@ -146,6 +164,7 @@ const InsuranceSheet = () => {
                 return;
             }
         }
+
         setEntriesByTab(prev => ({
             ...prev,
             [activeTab]: (prev[activeTab] || []).filter((_, i) => i !== idx)
@@ -154,20 +173,27 @@ const InsuranceSheet = () => {
 
     const saveEntry = async (idx) => {
         const entry = entriesByTab[activeTab][idx];
-        if (!entry.fullName.trim()) return toast.error('Employee Name is required');
+
+        if (!entry.fullName.trim()) {
+            return toast.error('Employee Name is required');
+        }
 
         setSaving(true);
         const toastId = toast.loading('Securing record...');
+
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('/api/insurance/entry', {
-                namespace: namespace,
+
+            const res = await axios.post(`${API_ORIGIN}/api/insurance/entry`, {
+                namespace,
                 categoryKey: activeTab,
                 month,
                 year,
                 entry
-            }, { headers: { 'x-auth-token': token } });
-            
+            }, {
+                headers: { 'x-auth-token': token }
+            });
+
             setEntriesByTab(prev => {
                 const next = { ...prev };
                 const currentTabEntries = [...(next[activeTab] || [])];
@@ -175,8 +201,10 @@ const InsuranceSheet = () => {
                 next[activeTab] = currentTabEntries;
                 return next;
             });
+
             toast.success('Record synchronized', { id: toastId });
         } catch (err) {
+            console.error(err);
             toast.error('Sync failed', { id: toastId });
         } finally {
             setSaving(false);
@@ -189,21 +217,22 @@ const InsuranceSheet = () => {
         { key: 'status', label: 'Execution Status', icon: <Clock size={14} />, width: 'w-44' },
         { key: 'observedById', label: 'Verified By', icon: <Search size={14} />, width: 'w-52' },
         { key: 'remarks', label: 'Operational Notes', icon: <FileText size={14} />, width: 'w-80' },
-        { key: 'completed', label: 'Done', icon: <CheckCircle2 size={14} />, width: 'w-24' },
+        { key: 'completed', label: 'Done', icon: <CheckCircle2 size={14} />, width: 'w-24' }
     ];
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
-                <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Accessing Insurance Vault...</p>
+                <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                    Accessing Insurance Vault...
+                </p>
             </div>
         );
     }
 
     return (
         <div className="max-w-[1600px] mx-auto px-6 py-8 space-y-8 entrance-animation">
-            {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-1">
                     <button
@@ -213,18 +242,29 @@ const InsuranceSheet = () => {
                         <ArrowLeft size={14} />
                         Nexus Task Hub
                     </button>
+
                     <div className="flex items-center gap-3 mb-2">
                         <div className={`p-2.5 rounded-xl shadow-lg ${isGeneral ? 'bg-amber-600 shadow-amber-600/20' : 'bg-indigo-600 shadow-indigo-600/20'}`}>
                             <ShieldPlus size={24} className="text-white" />
                         </div>
-                        <h1 className="text-4xl font-black text-white tracking-tight">{registryTitle} Insurance <span className={isGeneral ? 'text-amber-500' : 'text-indigo-500'}>Registry</span></h1>
+                        <h1 className="text-4xl font-black text-white tracking-tight">
+                            {registryTitle} Insurance{' '}
+                            <span className={isGeneral ? 'text-amber-500' : 'text-indigo-500'}>
+                                Registry
+                            </span>
+                        </h1>
                     </div>
+
                     <div className="flex items-center gap-3">
                         <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 backdrop-blur-sm">
                             <Calendar size={14} className={isGeneral ? 'text-amber-400' : 'text-indigo-400'} />
-                            <span className="text-xs font-bold text-slate-300">{monthNames[month - 1]} {year}</span>
+                            <span className="text-xs font-bold text-slate-300">
+                                {monthNames[month - 1]} {year}
+                            </span>
                         </div>
-                        <span className="text-slate-500 text-xs font-black uppercase tracking-[0.2em]">Finance {registryTitle} Insurance Module</span>
+                        <span className="text-slate-500 text-xs font-black uppercase tracking-[0.2em]">
+                            Finance {registryTitle} Insurance Module
+                        </span>
                     </div>
                 </div>
 
@@ -233,11 +273,10 @@ const InsuranceSheet = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                                activeTab === tab.id 
-                                ? `bg-gradient-to-r ${tab.color} text-white shadow-lg` 
-                                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
+                                    ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
+                                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                                }`}
                         >
                             {tab.icon}
                             {tab.label}
@@ -253,7 +292,6 @@ const InsuranceSheet = () => {
                 </div>
             )}
 
-            {/* Table */}
             <div className="glass-panel border-white/5 rounded-[40px] overflow-hidden flex flex-col bg-[#020617]/40 backdrop-blur-xl shadow-2xl">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-max">
@@ -271,6 +309,7 @@ const InsuranceSheet = () => {
                                 <th className="p-4 w-24"></th>
                             </tr>
                         </thead>
+
                         <tbody className="divide-y divide-white/5">
                             {(entriesByTab[activeTab] || []).map((entry, idx) => (
                                 <tr key={idx} className="group hover:bg-white/[0.02] transition-all">
@@ -282,6 +321,7 @@ const InsuranceSheet = () => {
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
+
                                     <td className="p-2">
                                         <AutoResizeTextarea
                                             value={entry.fullName || ''}
@@ -290,6 +330,7 @@ const InsuranceSheet = () => {
                                             className="text-xs text-white font-bold px-2 py-2"
                                         />
                                     </td>
+
                                     <td className="p-2">
                                         <select
                                             value={entry.department || ''}
@@ -298,10 +339,13 @@ const InsuranceSheet = () => {
                                         >
                                             <option value="">Select Dept...</option>
                                             {departments.map(d => (
-                                                <option key={d._id} value={d.name}>{d.name}</option>
+                                                <option key={d._id || d.id || d.name} value={d.name}>
+                                                    {d.name}
+                                                </option>
                                             ))}
                                         </select>
                                     </td>
+
                                     <td className="p-2">
                                         <select
                                             value={entry.status || 'In Progress'}
@@ -314,20 +358,26 @@ const InsuranceSheet = () => {
                                             <option value="Completed">Completed</option>
                                         </select>
                                     </td>
+
                                     <td className="p-2">
                                         <select
                                             value={entry.observedById || ''}
                                             onChange={(e) => {
-                                                const m = members.find(m => m.id === e.target.value);
+                                                const m = members.find(m => m.id === e.target.value || m._id === e.target.value);
                                                 handleInputChange(idx, 'observedById', e.target.value);
                                                 handleInputChange(idx, 'observedByName', m ? m.name : '');
                                             }}
                                             className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-black text-slate-300 uppercase tracking-widest outline-none focus:border-indigo-500/50 appearance-none cursor-pointer"
                                         >
                                             <option value="">System Select...</option>
-                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                            {members.map(m => (
+                                                <option key={m.id || m._id} value={m.id || m._id}>
+                                                    {m.name}
+                                                </option>
+                                            ))}
                                         </select>
                                     </td>
+
                                     <td className="p-2">
                                         <AutoResizeTextarea
                                             value={entry.remarks || ''}
@@ -336,6 +386,7 @@ const InsuranceSheet = () => {
                                             className="text-[11px] text-slate-500 font-medium px-2 py-2"
                                         />
                                     </td>
+
                                     <td className="p-4 text-center">
                                         <button
                                             onClick={() => handleInputChange(idx, 'completed', !entry.completed)}
@@ -344,6 +395,7 @@ const InsuranceSheet = () => {
                                             {entry.completed ? <CheckCircle2 size={24} /> : <Clock size={24} />}
                                         </button>
                                     </td>
+
                                     <td className="p-4">
                                         <button
                                             onClick={() => saveEntry(idx)}
@@ -366,6 +418,7 @@ const InsuranceSheet = () => {
                     >
                         <Plus size={14} /> Add New Entry
                     </button>
+
                     <div className="flex items-center gap-6 text-[10px] font-black text-slate-600 uppercase tracking-widest">
                         <span>Active Rows: {(entriesByTab[activeTab] || []).length}</span>
                         <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse" />
@@ -376,7 +429,7 @@ const InsuranceSheet = () => {
 
             <footer className="flex items-center justify-between text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">
                 <div className="flex items-center gap-4">
-                    <span>Registry Type: Life Insurance Portfolio</span>
+                    <span>Registry Type: {registryTitle} Insurance Portfolio</span>
                     <span className="w-1 h-1 bg-slate-700 rounded-full" />
                     <span>Real-time persistence enabled via POST/PATCH Nexus</span>
                 </div>

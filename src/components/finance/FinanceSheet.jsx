@@ -246,13 +246,26 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Success Metric</label>
-                        <input
-                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-emerald-500/50 transition-all font-medium"
-                            placeholder="e.g. 100% Reconciliation"
-                            value={planData.target}
-                            onChange={(e) => setPlanData({ ...planData, target: e.target.value })}
-                        />
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Success Percentage</label>
+                        <div className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2 text-sm font-black text-emerald-400 flex items-center justify-between">
+                            <span>{(() => {
+                                const activeTasks = tasks.filter(t => t.product?.trim());
+                                const total = activeTasks.length;
+                                const done = activeTasks.filter(t => t.done).length;
+                                return total > 0 ? Math.round((done / total) * 100) : 0;
+                            })()}%</span>
+                            <div className="flex-1 ml-4 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-emerald-500 transition-all duration-1000" 
+                                    style={{ width: `${(() => {
+                                        const activeTasks = tasks.filter(t => t.product?.trim());
+                                        const total = activeTasks.length;
+                                        const done = activeTasks.filter(t => t.done).length;
+                                        return total > 0 ? Math.round((done / total) * 100) : 0;
+                                    })()}%` }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
