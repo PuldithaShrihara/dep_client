@@ -239,7 +239,10 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                             <span>{(() => {
                                 const activeTasks = tasks.filter(t => t.product?.trim() || t.mediaType?.trim());
                                 const total = activeTasks.length;
-                                const done = activeTasks.filter(t => t.done).length;
+                                const done = activeTasks.filter(t => {
+                                    const status = (t.status || '').toLowerCase();
+                                    return t.done || status === 'completed' || status === 'published';
+                                }).length;
                                 return total > 0 ? Math.round((done / total) * 100) : 0;
                             })()}%</span>
                             <div className="flex-1 ml-4 h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -248,7 +251,10 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                                     style={{ width: `${(() => {
                                         const activeTasks = tasks.filter(t => t.product?.trim() || t.mediaType?.trim());
                                         const total = activeTasks.length;
-                                        const done = activeTasks.filter(t => t.done).length;
+                                        const done = activeTasks.filter(t => {
+                                            const status = (t.status || '').toLowerCase();
+                                            return t.done || status === 'completed' || status === 'published';
+                                        }).length;
                                         return total > 0 ? Math.round((done / total) * 100) : 0;
                                     })()}%` }}
                                 />
@@ -262,6 +268,7 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">
+                            <th className="p-2 w-12 bg-[#b45309] text-[11px] font-bold text-white text-center uppercase tracking-tight">No.</th>
                             <th className="p-2 w-10 bg-[#b45309]"></th>
                             {columns.map(col => (
                                 <th key={col.key} className={`p-2 text-[11px] font-bold text-white uppercase tracking-tight ${col.width}`}>
@@ -274,9 +281,14 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/10">
-                        {tasks.map((task, idx) => (
-                            <tr key={idx} className={`group hover:bg-amber-500/5 transition-colors divide-x divide-slate-200/10 ${task.done ? 'bg-emerald-500/20' : ''}`}>
-                                <td className={`p-1 text-center transition-colors ${task.done ? 'bg-emerald-500/30' : 'bg-slate-900/40'}`}>
+                        {tasks.map((task, idx) => {
+                            const isCompleted = (task.status || '').toLowerCase() === 'completed';
+                            return (
+                                <tr key={idx} className={`group hover:bg-amber-500/5 transition-colors divide-x divide-slate-200/10 ${isCompleted ? 'bg-emerald-500/20' : ''}`}>
+                                    <td className={`p-1 text-center text-[11px] font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'}`}>
+                                        {idx + 1}
+                                    </td>
+                                    <td className={`p-1 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : 'bg-slate-900/40'}`}>
                                     <button
                                         onClick={() => removeRow(idx)}
                                         className="p-1.5 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
@@ -370,7 +382,8 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                                     </button>
                                 </td>
                             </tr>
-                        ))}
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

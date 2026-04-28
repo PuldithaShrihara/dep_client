@@ -408,8 +408,27 @@ const Dashboard = () => {
                                 <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed mb-10 line-clamp-2">
                                     {dept.description || 'Optimizing workflows and ensuring strategic alignment for departmental growth.'}
                                 </p>
+
+                                <div className="mt-auto">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            Current Progress
+                                        </span>
+                                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">
+                                            {dept.completionPercent || 0}%
+                                        </span>
+                                    </div>
+
+                                    <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-white/5">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-1000 ease-out"
+                                            style={{ width: `${dept.completionPercent || 0}%` }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
                     ))}
                 </div>
             </main>
