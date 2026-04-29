@@ -26,7 +26,7 @@ const NotFound = () => {
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useAuth();
     if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/" />;
+    if (!user) return <Navigate to="/login" replace />;
     return children;
 };
 
@@ -34,8 +34,8 @@ const PrivateRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
     const { user, loading } = useAuth();
     if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/" />;
-    if (!canViewAdminArea(user)) return <Navigate to="/" />;
+    if (!user) return <Navigate to="/login" replace />;
+    if (!canViewAdminArea(user)) return <Navigate to="/dashboard" replace />;
     return children;
 };
 
@@ -43,8 +43,8 @@ const AdminRoute = ({ children }) => {
 const SuperAdminRoute = ({ children }) => {
     const { user, loading } = useAuth();
     if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/" />;
-    if (!isAdmin(user.role)) return <Navigate to="/" />;
+    if (!user) return <Navigate to="/login" replace />;
+    if (!isAdmin(user.role)) return <Navigate to="/dashboard" replace />;
     return children;
 };
 
@@ -55,7 +55,7 @@ function App() {
                 <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     <Toaster position="top-right" />
                     <Routes>
-                        <Route path="/" element={<Login />} />
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                             path="/dashboard"

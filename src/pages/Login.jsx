@@ -19,7 +19,7 @@ const Login = () => {
         try {
             const res = await login(username, password);
             if (res.success) {
-                navigate('/');
+                navigate('/dashboard');
             } else {
                 setError(res.message);
             }

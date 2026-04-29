@@ -26,20 +26,16 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             if (!token) {
                 if (!cancelled) {
-                    setUser({
-                        username: 'sadmin',
-                        role: 'Admin',
-                        fullName: 'Super Administrator',
-                        department: null
-                    });
+                    setUser(null);
                     setLoading(false);
                 }
                 return;
             }
+            console.log(`[Auth] Initializing with API_ORIGIN: "${API_ORIGIN}"`);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             try {
                 const { data } = await axios.get(`${API_ORIGIN}/api/auth/me`, {
-                    timeout: 12000
+                    timeout: 8000 // Reduced timeout for faster fallback
                 });
                 if (!cancelled) {
                     setUser(data);
@@ -64,7 +60,10 @@ export const AuthProvider = ({ children }) => {
                     }
                 }
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) {
+                    console.log('[Auth] Initialization complete, setting loading to false');
+                    setLoading(false);
+                }
             }
         };
         initAuth();

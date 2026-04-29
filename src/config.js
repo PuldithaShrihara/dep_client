@@ -11,4 +11,4 @@ export const API_ORIGIN =
         ? trimmed.replace(/\/$/, '')
         : import.meta.env.DEV
           ? ''
-          : 'https://dep-server-lwn2.onrender.com';
+          : ''; // Default to relative path in production for monorepo compatibility
