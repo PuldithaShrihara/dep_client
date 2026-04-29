@@ -38,7 +38,9 @@ export const AuthProvider = ({ children }) => {
             }
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             try {
-                const { data } = await axios.get(`${API_ORIGIN}/api/auth/me`);
+                const { data } = await axios.get(`${API_ORIGIN}/api/auth/me`, {
+                    timeout: 12000
+                });
                 if (!cancelled) {
                     setUser(data);
                     localStorage.setItem('user', JSON.stringify(data));

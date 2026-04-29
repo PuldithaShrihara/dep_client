@@ -45,14 +45,15 @@ const Login = () => {
             <div className="relative w-full max-w-[440px] entrance-animation">
                 <div className="glass-panel rounded-[32px] p-8 md:p-10 border border-slate-200/80 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(15,23,42,0.12)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]">
                     <div className="text-center mb-10">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-100 border border-indigo-200 dark:bg-indigo-600/20 dark:border-indigo-500/30 mb-6 group transition-all duration-500 hover:scale-110">
-                            <Lock className="text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors" size={28} />
+                        <div className="inline-flex items-center justify-center mb-6 group transition-all duration-500 hover:scale-110">
+                            <img src="/fadna-logo.png" alt="Fadna" className="w-32 h-auto" />
                         </div>
                         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
                             Portal <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">Access</span>
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 font-medium">Department Plan Monitoring System</p>
                     </div>
+
 
                     {error && (
                         <div className="flex items-center gap-3 p-4 mb-8 text-sm text-red-100 bg-red-500/10 border border-red-500/20 rounded-2xl animate-shake">

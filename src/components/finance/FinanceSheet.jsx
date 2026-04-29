@@ -212,7 +212,7 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                             disabled={saving}
                             className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all text-xs font-black shadow-lg shadow-emerald-600/20"
                         >
-                            {saving ? 'Saving...' : <><Save size={14} /> {isNew ? 'Deploy Plan' : 'Update Sheet'}</>}
+                            {saving ? 'Saving...' : <><Save size={14} /> Save</>}
                         </button>
                     </div>
                 </div>

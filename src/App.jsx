@@ -26,7 +26,7 @@ const NotFound = () => {
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useAuth();
     if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/login" />;
+    if (!user) return <Navigate to="/" />;
     return children;
 };
 
@@ -34,7 +34,7 @@ const PrivateRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
     const { user, loading } = useAuth();
     if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/login" />;
+    if (!user) return <Navigate to="/" />;
     if (!canViewAdminArea(user)) return <Navigate to="/" />;
     return children;
 };
@@ -43,7 +43,7 @@ const AdminRoute = ({ children }) => {
 const SuperAdminRoute = ({ children }) => {
     const { user, loading } = useAuth();
     if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/login" />;
+    if (!user) return <Navigate to="/" />;
     if (!isAdmin(user.role)) return <Navigate to="/" />;
     return children;
 };
@@ -55,7 +55,16 @@ function App() {
                 <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     <Toaster position="top-right" />
                     <Routes>
+                        <Route path="/" element={<Login />} />
                         <Route path="/login" element={<Login />} />
+                        <Route
+                            path="/dashboard"
+                            element={
+                                <PrivateRoute>
+                                    <Dashboard />
+                                </PrivateRoute>
+                            }
+                        />
                         <Route
                             path="/admin"
                             element={
@@ -74,14 +83,6 @@ function App() {
                             <Route path="hr/insurance" element={<InsuranceSheet />} />
                             <Route path="hr/resigned-employees" element={<ResignedEmployeeSheet />} />
                         </Route>
-                        <Route
-                            path="/"
-                            element={
-                                <PrivateRoute>
-                                    <Dashboard />
-                                </PrivateRoute>
-                            }
-                        />
                         <Route
                             path="/hr"
                             element={

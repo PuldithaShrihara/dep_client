@@ -469,12 +469,14 @@ const Dashboard = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
+                                            setShowPlanModal(false);
+                                            setSelectedDept(null);
                                             setActivePlan(null);
                                             setShowCreateForm(false);
                                         }}
                                         className="mb-4 text-xs font-black text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 w-max"
                                     >
-                                        ← Back to Plans
+                                        ← Back to Home
                                     </button>
 
                                     {selectedDept?.name === 'Marketing' ? (
