@@ -55,7 +55,8 @@ function App() {
                 <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     <Toaster position="top-right" />
                     <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="/index.html" element={<Navigate to="/login" replace />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                             path="/dashboard"
