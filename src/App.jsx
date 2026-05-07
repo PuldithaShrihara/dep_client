@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
@@ -9,7 +9,7 @@ import HrTaskHub from "./pages/HrTaskHub.jsx";
 import NewEmployeeSheet from "./components/admin/NewEmployeeSheet.jsx";
 import InsuranceSheet from "./components/admin/InsuranceSheet.jsx";
 import ResignedEmployeeSheet from "./components/admin/ResignedEmployeeSheet.jsx";
-import { isAdmin, isDepartmentHead, canViewAdminArea } from './utils/roles';
+import { isAdmin, canViewAdminArea } from './utils/roles';
 
 const NotFound = () => {
     return (
@@ -22,19 +22,50 @@ const NotFound = () => {
     );
 };
 
+const AppLoading = () => (
+    <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>
+);
+
+const HomeRoute = () => {
+    return <Navigate to="/login" replace />;
+};
+
+/** Example protected nested route — refresh here must serve index.html (see render.yaml SPA rewrite). */
+const AppointmentExamplePage = () => {
+    const { id } = useParams();
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+            <p className="text-lg font-bold">Appointment</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">ID: {id}</p>
+        </div>
+    );
+};
+
 // eslint-disable-next-line react/prop-types
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useAuth();
-    if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/login" replace />;
+    const location = useLocation();
+
+    if (loading) return <AppLoading />;
+
+    if (!user) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
     return children;
 };
 
 // eslint-disable-next-line react/prop-types
 const AdminRoute = ({ children }) => {
     const { user, loading } = useAuth();
-    if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/login" replace />;
+    const location = useLocation();
+
+    if (loading) return <AppLoading />;
+
+    if (!user) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
     if (!canViewAdminArea(user)) return <Navigate to="/dashboard" replace />;
     return children;
 };
@@ -42,8 +73,14 @@ const AdminRoute = ({ children }) => {
 // eslint-disable-next-line react/prop-types
 const SuperAdminRoute = ({ children }) => {
     const { user, loading } = useAuth();
-    if (loading) return <div className="flex items-center justify-center h-screen bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-300">Loading...</div>;
-    if (!user) return <Navigate to="/login" replace />;
+    const location = useLocation();
+
+    if (loading) return <AppLoading />;
+
+    if (!user) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
     if (!isAdmin(user.role)) return <Navigate to="/dashboard" replace />;
     return children;
 };
@@ -55,14 +92,32 @@ function App() {
                 <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     <Toaster position="top-right" />
                     <Routes>
-                        <Route path="/" element={<Navigate to="/login" replace />} />
-                        <Route path="/index.html" element={<Navigate to="/login" replace />} />
+                        <Route path="/" element={<HomeRoute />} />
+                        <Route path="/index.html" element={<HomeRoute />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                             path="/dashboard"
                             element={
                                 <PrivateRoute>
                                     <Dashboard />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/profile"
+                            element={
+                                <PrivateRoute>
+                                    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+                                        <p className="text-lg font-bold">Profile</p>
+                                    </div>
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/appointments/:id"
+                            element={
+                                <PrivateRoute>
+                                    <AppointmentExamplePage />
                                 </PrivateRoute>
                             }
                         />

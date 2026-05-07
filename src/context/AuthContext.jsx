@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { API_ORIGIN } from '../config';
 
@@ -10,9 +10,44 @@ function clearStoredAuth() {
     delete axios.defaults.headers.common['Authorization'];
 }
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Retries for Render cold start and transient 5xx; do not retry definitive auth failures. */
+async function fetchMeWithRetries(token, maxAttempts = 3) {
+    let lastErr;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await axios.get(`${API_ORIGIN}/api/auth/me`, {
+                timeout: 12000,
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (err) {
+            lastErr = err;
+            const status = err.response?.status;
+            const noResponse = !err.response;
+            const transient5xx =
+                status === 500 ||
+                (typeof status === 'number' && status >= 502 && status <= 504);
+            if (status === 401 || status === 403) break;
+            if (
+                attempt < maxAttempts &&
+                (noResponse || err.code === 'ECONNABORTED' || transient5xx)
+            ) {
+                await sleep(500 * attempt);
+                continue;
+            }
+            break;
+        }
+    }
+    throw lastErr;
+}
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const authBootstrapping = useRef(true);
 
     const logout = useCallback(() => {
         clearStoredAuth();
@@ -23,20 +58,33 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let cancelled = false;
         const initAuth = async () => {
+            authBootstrapping.current = true;
             const token = localStorage.getItem('token');
             if (!token) {
                 if (!cancelled) {
                     setUser(null);
                     setLoading(false);
                 }
+                authBootstrapping.current = false;
                 return;
             }
-            console.log(`[Auth] Initializing with API_ORIGIN: "${API_ORIGIN}"`);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Hydrate from localStorage so protected routes do not bounce to /login while /me is in flight.
+            const storedRaw = localStorage.getItem('user');
+            let hydratedFromStorage = false;
+            if (storedRaw) {
+                try {
+                    setUser(JSON.parse(storedRaw));
+                    hydratedFromStorage = true;
+                    if (!cancelled) setLoading(false);
+                } catch {
+                    /* wait for /me */
+                }
+            }
+
             try {
-                const { data } = await axios.get(`${API_ORIGIN}/api/auth/me`, {
-                    timeout: 8000 // Reduced timeout for faster fallback
-                });
+                const { data } = await fetchMeWithRetries(token);
                 if (!cancelled) {
                     setUser(data);
                     localStorage.setItem('user', JSON.stringify(data));
@@ -46,24 +94,28 @@ export const AuthProvider = ({ children }) => {
                 if (status === 401 || status === 403) {
                     clearStoredAuth();
                     if (!cancelled) setUser(null);
-                } else {
+                } else if (!hydratedFromStorage) {
+                    // Transient failure: keep token; restore profile from storage if still present.
                     const stored = localStorage.getItem('user');
                     if (stored && !cancelled) {
                         try {
                             setUser(JSON.parse(stored));
                         } catch {
                             clearStoredAuth();
-                            setUser(null);
+                            if (!cancelled) setUser(null);
                         }
                     } else if (!cancelled) {
                         setUser(null);
                     }
                 }
+                // If hydratedFromStorage, keep cached user on network/5xx during refresh.
             } finally {
                 if (!cancelled) {
-                    console.log('[Auth] Initialization complete, setting loading to false');
-                    setLoading(false);
+                    if (!hydratedFromStorage) {
+                        setLoading(false);
+                    }
                 }
+                authBootstrapping.current = false;
             }
         };
         initAuth();
@@ -79,6 +131,11 @@ export const AuthProvider = ({ children }) => {
                 const status = err.response?.status;
                 const url = String(err.config?.url || '');
                 if (status === 401 && !url.includes('/api/auth/login')) {
+                    // Avoid clearing session on the very first /me check while we are still bootstrapping —
+                    // initAuth will decide using the response.
+                    if (url.includes('/api/auth/me') && authBootstrapping.current) {
+                        return Promise.reject(err);
+                    }
                     logout();
                 }
                 return Promise.reject(err);

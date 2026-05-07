@@ -1,23 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+
+function pathAfterAuth(from) {
+    if (!from || typeof from.pathname !== 'string') return '/dashboard';
+    const path = `${from.pathname}${from.search || ''}${from.hash || ''}` || '/dashboard';
+    // Avoid redirect loops if "from" was the login route
+    if (path === '/login' || path.startsWith('/login?')) return '/dashboard';
+    return path;
+}
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login, user } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
-
-    // Redirect to dashboard if already logged in
-    useEffect(() => {
-        if (user) {
-            navigate('/dashboard', { replace: true });
-        }
-    }, [user, navigate]);
+    const location = useLocation();
+    const redirectTo = pathAfterAuth(location.state?.from);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,7 +29,7 @@ const Login = () => {
         try {
             const res = await login(username, password);
             if (res.success) {
-                navigate('/dashboard');
+                navigate(redirectTo, { replace: true });
             } else {
                 setError(res.message);
             }

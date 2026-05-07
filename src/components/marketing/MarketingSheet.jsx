@@ -472,7 +472,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             type="date"
                                             value={task.startDate}
                                             onChange={(e) => handleInputChange(idx, 'startDate', e.target.value)}
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-300 [color-scheme:dark] outline-none"
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
                                         />
                                     </td>
                                     <td className="px-1 py-0.5">
@@ -480,7 +480,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             type="date"
                                             value={task.endDate}
                                             onChange={(e) => handleInputChange(idx, 'endDate', e.target.value)}
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-300 [color-scheme:dark] outline-none"
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
                                         />
                                     </td>
                                     <td className="px-1 py-0.5">
