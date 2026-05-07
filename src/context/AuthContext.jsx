@@ -45,7 +45,14 @@ async function fetchMeWithRetries(token, maxAttempts = 3) {
 }
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        try {
+            const stored = localStorage.getItem('user');
+            return stored ? JSON.parse(stored) : null;
+        } catch {
+            return null;
+        }
+    });
     const [loading, setLoading] = useState(true);
     const authBootstrapping = useRef(true);
 
@@ -70,16 +77,16 @@ export const AuthProvider = ({ children }) => {
             }
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-            // Hydrate from localStorage so protected routes do not bounce to /login while /me is in flight.
             const storedRaw = localStorage.getItem('user');
             let hydratedFromStorage = false;
-            if (storedRaw) {
+
+            if (storedRaw && !cancelled) {
                 try {
                     setUser(JSON.parse(storedRaw));
                     hydratedFromStorage = true;
-                    if (!cancelled) setLoading(false);
+                    setLoading(false);
                 } catch {
-                    /* wait for /me */
+                    hydratedFromStorage = false;
                 }
             }
 
