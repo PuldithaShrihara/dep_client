@@ -67,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         const initAuth = async () => {
             authBootstrapping.current = true;
             const token = localStorage.getItem('token');
+            
             if (!token) {
                 if (!cancelled) {
                     setUser(null);
@@ -75,6 +76,7 @@ export const AuthProvider = ({ children }) => {
                 authBootstrapping.current = false;
                 return;
             }
+            
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             const storedRaw = localStorage.getItem('user');
@@ -82,9 +84,12 @@ export const AuthProvider = ({ children }) => {
 
             if (storedRaw && !cancelled) {
                 try {
-                    setUser(JSON.parse(storedRaw));
-                    hydratedFromStorage = true;
-                    setLoading(false);
+                    const parsedUser = JSON.parse(storedRaw);
+                    if (parsedUser && typeof parsedUser === 'object') {
+                        setUser(parsedUser);
+                        hydratedFromStorage = true;
+                        setLoading(false);
+                    }
                 } catch {
                     hydratedFromStorage = false;
                 }
@@ -97,12 +102,13 @@ export const AuthProvider = ({ children }) => {
                     localStorage.setItem('user', JSON.stringify(data));
                 }
             } catch (err) {
-                const status = err.response?.status;
+                const status = err?.response?.status;
+                // Only clear auth on definitive 401/403.
                 if (status === 401 || status === 403) {
                     clearStoredAuth();
                     if (!cancelled) setUser(null);
                 } else if (!hydratedFromStorage) {
-                    // Transient failure: keep token; restore profile from storage if still present.
+                    // Transient failure without cached user: try to recover or fail safely.
                     const stored = localStorage.getItem('user');
                     if (stored && !cancelled) {
                         try {
@@ -115,17 +121,22 @@ export const AuthProvider = ({ children }) => {
                         setUser(null);
                     }
                 }
-                // If hydratedFromStorage, keep cached user on network/5xx during refresh.
             } finally {
                 if (!cancelled) {
                     if (!hydratedFromStorage) {
                         setLoading(false);
                     }
                 }
-                authBootstrapping.current = false;
+                // Delay setting bootstrapping to false to prevent StrictMode race conditions
+                // where the second mount's requests might fire while this is false.
+                setTimeout(() => {
+                    authBootstrapping.current = false;
+                }, 1000);
             }
         };
+        
         initAuth();
+        
         return () => {
             cancelled = true;
         };
@@ -135,14 +146,16 @@ export const AuthProvider = ({ children }) => {
         const id = axios.interceptors.response.use(
             (res) => res,
             (err) => {
-                const status = err.response?.status;
-                const url = String(err.config?.url || '');
+                const status = err?.response?.status;
+                const url = String(err?.config?.url || '');
+                
+                // If it's a 401 and not the login endpoint
                 if (status === 401 && !url.includes('/api/auth/login')) {
-                    // Avoid clearing session on the very first /me check while we are still bootstrapping —
-                    // initAuth will decide using the response.
-                    if (url.includes('/api/auth/me') && authBootstrapping.current) {
+                    // Ignore 401s during the initial bootstrapping phase
+                    if (authBootstrapping.current) {
                         return Promise.reject(err);
                     }
+                    // Otherwise, a 401 means the token expired or is invalid, so logout.
                     logout();
                 }
                 return Promise.reject(err);
