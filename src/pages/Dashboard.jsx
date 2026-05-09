@@ -1,6 +1,6 @@
 // Dashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -59,15 +59,18 @@ function planHasProgressData(plan, deptName) {
 }
 
 const Dashboard = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialDeptId = urlParams.get('deptId');
+
     const [departments, setDepartments] = useState([]);
     const [selectedDept, setSelectedDept] = useState(null);
     const [activePlan, setActivePlan] = useState(null);
     const [plans, setPlans] = useState([]);
-    const [showPlanModal, setShowPlanModal] = useState(false);
+    const [showPlanModal, setShowPlanModal] = useState(!!initialDeptId);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [creatingPlan, setCreatingPlan] = useState(false);
     const [deletingPlanId, setDeletingPlanId] = useState(null);
-    const [loadingPlans, setLoadingPlans] = useState(false);
+    const [loadingPlans, setLoadingPlans] = useState(!!initialDeptId);
 
     const [newPlan, setNewPlan] = useState({
         month: '',
@@ -79,6 +82,8 @@ const Dashboard = () => {
 
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const isFullScreen = activePlan || showCreateForm || searchParams.get('planId');
 
     const visibleDepartments = useMemo(() => {
         if (!user) return [];
@@ -197,12 +202,50 @@ const Dashboard = () => {
     };
 
     const handleDeptClick = (dept) => {
-        setSelectedDept(dept);
-        fetchPlans(dept._id);
-        setShowPlanModal(true);
-        setActivePlan(null);
-        setShowCreateForm(dept.name === 'Admin' && canEditDepartment(user, dept.name));
+        setSearchParams({ deptId: dept._id });
     };
+
+    useEffect(() => {
+        const deptId = searchParams.get('deptId');
+        
+        if (deptId && departments.length > 0) {
+            const dept = departments.find(d => d._id === deptId);
+            if (dept) {
+                if (!selectedDept || selectedDept._id !== deptId) {
+                    setSelectedDept(dept);
+                    setShowPlanModal(true);
+                    setActivePlan(null);
+                    setShowCreateForm(dept.name === 'Admin' && canEditDepartment(user, dept.name));
+                    fetchPlans(deptId);
+                }
+            } else {
+                setSearchParams({});
+            }
+        } else if (!deptId && showPlanModal) {
+            setShowPlanModal(false);
+            setSelectedDept(null);
+            setActivePlan(null);
+            setShowCreateForm(false);
+        }
+    }, [searchParams, departments, user]);
+
+    useEffect(() => {
+        const planId = searchParams.get('planId');
+        
+        if (planId && plans.length > 0) {
+            const plan = plans.find(p => p._id === planId);
+            if (plan) {
+                if (!activePlan || activePlan._id !== planId) {
+                    setActivePlan(plan);
+                }
+            } else {
+                const deptId = searchParams.get('deptId');
+                setSearchParams(deptId ? { deptId } : {});
+            }
+        } else if (!planId && activePlan) {
+            setActivePlan(null);
+        }
+    }, [searchParams, plans]);
 
     const handleCreatePlan = async (e) => {
         e.preventDefault();
@@ -264,7 +307,7 @@ const Dashboard = () => {
             selectedDept?.name === 'R&D' ||
             selectedDept?.name === 'Finance'
         ) {
-            setActivePlan(plan);
+            setSearchParams({ deptId: selectedDept._id, planId: plan._id });
         }
     };
 
@@ -437,26 +480,26 @@ const Dashboard = () => {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                     <div
                         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-[#020617]/80"
-                        onClick={() => setShowPlanModal(false)}
+                        onClick={() => setSearchParams({})}
                     />
 
-                    <div className={`relative w-full transition-all duration-500 overflow-hidden glass-panel border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col entrance-animation ${((activePlan || showCreateForm) && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name))
+                    <div className={`relative w-full transition-all duration-500 overflow-hidden glass-panel border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col entrance-animation ${isFullScreen
                             ? 'max-w-none h-screen rounded-none'
                             : 'max-w-4xl max-h-[90vh] rounded-[40px]'
                         }`}>
                         <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/5 flex justify-between items-center bg-white/40 dark:bg-white/[0.02]">
                             <div>
                                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                                    {selectedDept?.name} Plans
+                                    {selectedDept ? `${selectedDept.name} Plans` : 'Loading Plans...'}
                                 </h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    Monthly strategic objectives and performance targets
+                                    {selectedDept ? 'Monthly strategic objectives and performance targets' : 'Hydrating state from secure backend'}
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={() => setShowPlanModal(false)}
+                                onClick={() => setSearchParams({})}
                                 className="p-2 hover:bg-slate-200/80 dark:hover:bg-white/5 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                             >
                                 <X size={20} />
@@ -464,19 +507,25 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex-1 overflow-auto p-8">
-                            {((activePlan || showCreateForm) && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name)) ? (
+                            {(!selectedDept || loadingPlans || (searchParams.get('planId') && !activePlan)) ? (
+                                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                                    <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4" />
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium text-sm tracking-widest uppercase">
+                                        {!selectedDept ? 'Initializing Secure Environment...' : 'Loading Plan Data...'}
+                                    </p>
+                                </div>
+                            ) : ((activePlan || showCreateForm) && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name)) ? (
                                 <div className="flex-1 flex flex-col min-h-0">
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setShowPlanModal(false);
-                                            setSelectedDept(null);
-                                            setActivePlan(null);
+                                            const deptId = searchParams.get('deptId');
+                                            setSearchParams(deptId ? { deptId } : {});
                                             setShowCreateForm(false);
                                         }}
                                         className="mb-4 text-xs font-black text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 w-max"
                                     >
-                                        ← Back to Home
+                                        ← Back to Plans
                                     </button>
 
                                     {selectedDept?.name === 'Marketing' ? (
@@ -495,6 +544,7 @@ const Dashboard = () => {
                                                 fetchPlans(selectedDept._id);
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
+                                                setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
                                             }}
                                         />
                                     ) : selectedDept?.name === 'R&D' ? (
@@ -514,6 +564,7 @@ const Dashboard = () => {
                                                 fetchPlans(selectedDept._id);
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
+                                                setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
                                             }}
                                         />
                                     ) : (
@@ -532,6 +583,7 @@ const Dashboard = () => {
                                                 fetchPlans(selectedDept._id);
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
+                                                setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
                                             }}
                                         />
                                     )}

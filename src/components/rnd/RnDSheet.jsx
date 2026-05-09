@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
-    FileText, Clock, ChevronDown, CheckSquare, Cloud, Flag, File,
+    FileText, Clock, ChevronDown, ChevronRight, CornerDownRight, CheckSquare, Cloud, Flag, File,
     MoreHorizontal
 } from 'lucide-react';
 import { API_ORIGIN } from '../../config';
+import { flattenNestedRdTasksToLegacy } from '../../utils/rnd/rdTasks';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -33,7 +34,7 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     );
 };
 
-const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId, initialTitle = '', initialMonth = '', initialYear = new Date().getFullYear(), initialTarget = '', initialDescription = '' }) => {
+const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = false, onSuccess, deptId, initialTitle = '', initialMonth = '', initialYear = new Date().getFullYear(), initialTarget = '', initialDescription = '' }) => {
     const [planData, setPlanData] = useState({
         title: initialTitle,
         month: initialMonth,
@@ -41,6 +42,10 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
         target: initialTarget,
         description: initialDescription
     });
+
+    const resolvedTasks = initialRdMainTasks?.length > 0 
+        ? flattenNestedRdTasksToLegacy(initialRdMainTasks) 
+        : initialTasks;
 
     useEffect(() => {
         if (!isNew && planId) {
@@ -51,14 +56,14 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                 target: initialTarget || '',
                 description: initialDescription || ''
             });
-            setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(40).fill({
+            setTasks(resolvedTasks && resolvedTasks.length > 0 ? resolvedTasks : Array(40).fill({
                 product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
                 description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
                 startDate: '', endDate: '', notes: '', completedBy: '',
                 completedTime: '', reportTo: ''
             }).map(row => ({ ...row })));
         }
-    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
+    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, isNew, initialRdMainTasks, initialTasks]);
 
     // Columns Mapping for R&D:
     // Task -> product
@@ -72,7 +77,7 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
     // remark (2) -> description
     // done -> done
 
-    const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : Array(40).fill({
+    const [tasks, setTasks] = useState(resolvedTasks?.length > 0 ? resolvedTasks : Array(40).fill({
         product: '',      // Task
         mediaType: '',    // sub task
         marketingChannel: '', // responsible
@@ -92,10 +97,14 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
     }).map(row => ({ ...row })));
 
     const [saving, setSaving] = useState(false);
+    const [collapsedMains, setCollapsedMains] = useState({});
+
+    const toggleCollapse = (mainId) => {
+        setCollapsedMains(prev => ({ ...prev, [mainId]: !prev[mainId] }));
+    };
 
     const columns = [
-        { key: 'product', label: 'Task', icon: <File size={14} />, width: 'w-64' },
-        { key: 'mediaType', label: 'Sub Task', icon: <ChevronDown size={14} />, width: 'w-64' },
+        { key: 'product', label: 'Task', icon: <File size={14} />, width: 'w-[400px]' },
         { key: 'marketingChannel', label: 'Responsible', icon: <User size={14} />, width: 'w-48' },
         { key: 'status', label: 'Status', icon: <Cloud size={14} />, width: 'w-40' },
         { key: 'mainGoal', label: 'Remark', icon: <FileText size={14} />, width: 'w-64' },
@@ -126,6 +135,30 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
     const removeRow = (index) => {
         if (tasks.length === 1) return;
         const newTasks = tasks.filter((_, i) => i !== index);
+        setTasks(newTasks);
+    };
+
+    const handleAddSubtask = (idx) => {
+        let insertIndex = idx + 1;
+        while (insertIndex < tasks.length) {
+            if (tasks[insertIndex].product?.trim()) {
+                break;
+            }
+            insertIndex++;
+        }
+
+        const newRow = {
+            product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+            description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
+            startDate: '', endDate: '', notes: '', completedBy: '',
+            completedTime: '', reportTo: ''
+        };
+
+        const newTasks = [
+            ...tasks.slice(0, insertIndex),
+            newRow,
+            ...tasks.slice(insertIndex)
+        ];
         setTasks(newTasks);
     };
 
@@ -286,12 +319,57 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/10">
-                        {tasks.map((task, idx) => {
-                            const isCompleted = (task.status || '').toLowerCase() === 'completed';
-                            return (
+                        {(() => {
+                            const displayTasks = [];
+                            let mainCounter = 0;
+                            let subCounter = 0;
+
+                            tasks.forEach((task, idx) => {
+                                const isSubtask = task._isSubtask || (task.product === '' && task.mediaType !== '');
+                                
+                                let displayNumber = '';
+                                if (!isSubtask) {
+                                    mainCounter++;
+                                    subCounter = 0;
+                                    displayNumber = `${mainCounter}`;
+                                } else {
+                                    subCounter++;
+                                    displayNumber = `${mainCounter}.${subCounter}`;
+                                }
+
+                                let hasSubtasks = false;
+                                if (!isSubtask) {
+                                    if (idx + 1 < tasks.length) {
+                                        const nextTask = tasks[idx + 1];
+                                        if (nextTask._isSubtask || (nextTask.product === '' && nextTask.mediaType !== '')) {
+                                            hasSubtasks = true;
+                                        }
+                                    }
+                                }
+
+                                if (isSubtask && collapsedMains[mainCounter]) {
+                                    return;
+                                }
+
+                                displayTasks.push({
+                                    task,
+                                    originalIndex: idx,
+                                    isSubtask,
+                                    displayNumber,
+                                    mainCounter,
+                                    hasSubtasks
+                                });
+                            });
+
+                            return displayTasks.map(({ task, originalIndex, isSubtask, displayNumber, mainCounter, hasSubtasks }) => {
+                                const idx = originalIndex;
+                                const isCompleted = (task.status || '').toLowerCase() === 'completed';
+                                return (
                                 <tr key={idx} className={`group hover:bg-amber-500/5 transition-colors divide-x divide-slate-200/10 ${isCompleted ? 'bg-emerald-500/20' : ''}`}>
-                                    <td className={`p-1 text-center text-[11px] font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'}`}>
-                                        {idx + 1}
+                                    <td className={`p-1 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'}`}>
+                                        <span className={isSubtask ? 'text-[10px] opacity-60' : 'text-[12px]'}>
+                                            {displayNumber}
+                                        </span>
                                     </td>
                                     <td className={`p-1 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : 'bg-slate-900/40'}`}>
                                     <button
@@ -301,19 +379,50 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                                         <Trash2 size={12} />
                                     </button>
                                 </td>
-                                <td className="p-1">
-                                    <AutoResizeTextarea
-                                        value={task.product}
-                                        onChange={(e) => handleInputChange(idx, 'product', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
-                                    />
-                                </td>
-                                <td className="p-1">
-                                    <AutoResizeTextarea
-                                        value={task.mediaType}
-                                        onChange={(e) => handleInputChange(idx, 'mediaType', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
-                                    />
+                                <td className="p-1 relative group/task">
+                                    <div className={`flex items-start ${isSubtask ? 'pl-6 relative' : ''}`}>
+                                        {!isSubtask && hasSubtasks && (
+                                            <button
+                                                onClick={() => toggleCollapse(mainCounter)}
+                                                className="mt-1.5 mr-2 text-slate-500 hover:text-amber-500 transition-colors shrink-0"
+                                            >
+                                                {collapsedMains[mainCounter] ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                                            </button>
+                                        )}
+                                        {!isSubtask && !hasSubtasks && (
+                                            <div className="w-[22px] shrink-0" />
+                                        )}
+                                        
+                                        {isSubtask && (
+                                            <div className="absolute left-2 top-0 bottom-0 w-px bg-amber-500/20" />
+                                        )}
+                                        {isSubtask && (
+                                            <div className="absolute left-2 top-1/2 w-3 h-px bg-amber-500/20" />
+                                        )}
+                                        
+                                        <div className="flex-1 relative flex items-start w-full">
+                                            {isSubtask && (
+                                                <CornerDownRight size={12} className="text-amber-500/50 mt-1.5 mr-2 shrink-0" />
+                                            )}
+                                            
+                                            <AutoResizeTextarea
+                                                value={isSubtask ? task.mediaType : task.product}
+                                                onChange={(e) => handleInputChange(idx, isSubtask ? 'mediaType' : 'product', e.target.value)}
+                                                placeholder={isSubtask ? "Enter subtask..." : "Enter task..."}
+                                                className={`text-[13px] ${isSubtask ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'} px-2 py-1 pr-8 w-full block`}
+                                            />
+                                            
+                                            {!isSubtask && task.product?.trim() && (
+                                                <button
+                                                    onClick={() => handleAddSubtask(idx)}
+                                                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-amber-500/50 hover:text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 rounded-full transition-all opacity-0 group-hover/task:opacity-100 flex items-center justify-center bg-amber-500/5"
+                                                    title="Add Subtask"
+                                                >
+                                                    <Plus size={10} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td className="p-1">
                                     <AutoResizeTextarea
@@ -388,7 +497,8 @@ const RnDSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId,
                                 </td>
                             </tr>
                             );
-                        })}
+                        });
+                        })()}
                     </tbody>
                 </table>
             </div>
