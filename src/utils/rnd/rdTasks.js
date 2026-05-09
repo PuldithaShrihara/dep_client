@@ -96,38 +96,38 @@ export function flattenNestedRdTasksToLegacy(mains) {
     if (!mains || !Array.isArray(mains)) return [];
     const rows = [];
     for (const main of mains) {
-        if (!main.subtasks || main.subtasks.length === 0) {
-            // Main task with no subtasks
-            rows.push({
-                product: main.title || '',
-                mediaType: '',
-                marketingChannel: '',
-                status: main.status || 'planning',
-                mainGoal: '',
-                description: '',
-                owner: '',
-                startDate: '',
-                endDate: '',
-                done: (main.status || '').toLowerCase() === 'completed'
-            });
-            continue;
-        }
+        // Main task row
+        rows.push({
+            product: main.title || '',
+            mediaType: '',
+            marketingChannel: '',
+            status: main.status || 'planning',
+            mainGoal: '',
+            description: '',
+            owner: '',
+            startDate: '',
+            endDate: '',
+            done: (main.status || '').toLowerCase() === 'completed'
+        });
 
-        // Main task with subtasks
-        for (let i = 0; i < main.subtasks.length; i++) {
-            const s = main.subtasks[i];
-            rows.push({
-                product: i === 0 ? (main.title || '') : '',
-                mediaType: s.title || '',
-                marketingChannel: s.responsible || '',
-                status: s.status || 'planning',
-                mainGoal: s.remark || '',
-                description: '', // Re-splitting remark is non-trivial, so we put it in mainGoal
-                owner: s.assignedEmployee || '',
-                startDate: s.startDate || '',
-                endDate: s.endDate || '',
-                done: !!s.isDone
-            });
+        // Subtask rows
+        if (main.subtasks && main.subtasks.length > 0) {
+            for (let i = 0; i < main.subtasks.length; i++) {
+                const s = main.subtasks[i];
+                rows.push({
+                    product: '',
+                    mediaType: s.title || '',
+                    marketingChannel: s.responsible || '',
+                    status: s.status || 'planning',
+                    mainGoal: s.remark || '',
+                    description: '', // Re-splitting remark is non-trivial, so we put it in mainGoal
+                    owner: s.assignedEmployee || '',
+                    startDate: s.startDate || '',
+                    endDate: s.endDate || '',
+                    done: !!s.isDone,
+                    _isSubtask: true // explicitly mark it for frontend display logic
+                });
+            }
         }
     }
     return rows;

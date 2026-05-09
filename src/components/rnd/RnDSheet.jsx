@@ -415,10 +415,10 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                             {!isSubtask && task.product?.trim() && (
                                                 <button
                                                     onClick={() => handleAddSubtask(idx)}
-                                                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-amber-500/50 hover:text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 rounded-full transition-all opacity-0 group-hover/task:opacity-100 flex items-center justify-center bg-amber-500/5"
+                                                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-amber-500 hover:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 rounded-full transition-all flex items-center justify-center bg-amber-500/10"
                                                     title="Add Subtask"
                                                 >
-                                                    <Plus size={10} />
+                                                    <Plus size={12} />
                                                 </button>
                                             )}
                                         </div>
