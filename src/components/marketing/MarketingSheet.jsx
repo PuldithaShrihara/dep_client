@@ -167,6 +167,11 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
     };
 
     const handleSave = async () => {
+        if (!planData.title?.trim() || !planData.month) {
+            alert('Please provide both a Strategy Title and a Month before saving.');
+            return;
+        }
+
         setSaving(true);
         try {
             if (isNew) {
