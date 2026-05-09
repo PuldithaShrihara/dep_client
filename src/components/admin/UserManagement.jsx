@@ -148,8 +148,8 @@ const UserManagement = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-white tracking-tight">User Administration</h2>
-                    <p className="text-slate-400 font-medium">Manage access control and departmental assignments</p>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">User Administration</h2>
+                    <p className="text-slate-600 dark:text-slate-400 font-medium">Manage access control and departmental assignments</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
@@ -169,7 +169,7 @@ const UserManagement = () => {
                         placeholder="Search by name, username or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
                     />
                 </div>
                 <div className="relative group">
@@ -177,31 +177,31 @@ const UserManagement = () => {
                     <select
                         value={filterDept}
                         onChange={(e) => setFilterDept(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium appearance-none"
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium appearance-none"
                     >
                         <option value="all">All Departments</option>
                         {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
                     </select>
                 </div>
-                <div className="glass-panel border-white/5 flex items-center justify-center gap-4 px-6 rounded-2xl">
+                <div className="glass-panel border-slate-200 dark:border-white/5 flex items-center justify-center gap-4 px-6 rounded-2xl">
                     <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Accounts</span>
-                    <span className="text-xl font-black text-white">{users.length}</span>
+                    <span className="text-xl font-black text-slate-900 dark:text-white">{users.length}</span>
                 </div>
             </div>
 
             {/* Users Table */}
-            <div className="glass-panel border-white/5 rounded-[32px] overflow-hidden">
+            <div className="glass-panel border-slate-200 dark:border-white/5 rounded-[32px] overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-white/5 bg-white/[0.02]">
+                            <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/[0.02]">
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">User Profile</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Role & Dept</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                             {loading ? (
                                 <tr>
                                     <td colSpan="4" className="px-6 py-20 text-center">
@@ -225,11 +225,11 @@ const UserManagement = () => {
                                     <tr key={user._id} className="group hover:bg-indigo-500/[0.02] transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-black text-white text-lg">
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-black text-slate-900 dark:text-white text-lg">
                                                     {user.username[0].toUpperCase()}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-white group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{user.username}</span>
+                                                    <span className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{user.username}</span>
                                                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.fullName || 'No Name Set'}</span>
                                                 </div>
                                             </div>
@@ -238,7 +238,7 @@ const UserManagement = () => {
                                             <div className="flex flex-col gap-1.5">
                                                 <div className="flex items-center gap-2">
                                                     <Shield size={14} className="text-amber-400" />
-                                                    <span className="text-xs font-black text-slate-300 uppercase tracking-wider">{user.role}</span>
+                                                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">{user.role}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <MapPin size={14} className="text-indigo-400" />
@@ -259,14 +259,14 @@ const UserManagement = () => {
                                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => handleOpenModal(user)}
-                                                    className="p-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-xl transition-all"
+                                                    className="p-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-slate-900 dark:text-white rounded-xl transition-all"
                                                     title="Edit User"
                                                 >
                                                     <Edit2 size={16} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(user._id)}
-                                                    className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"
+                                                    className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-slate-900 dark:text-white rounded-xl transition-all"
                                                     title="Delete User"
                                                 >
                                                     <Trash2 size={16} />
@@ -288,14 +288,14 @@ const UserManagement = () => {
 
                     <div className="relative w-full max-w-xl glass-panel border-white/10 rounded-[40px] shadow-2xl overflow-hidden entrance-animation">
                         {/* Modal Header */}
-                        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <div className="p-8 border-b border-slate-200 dark:border-white/5 flex justify-between items-center bg-slate-100 dark:bg-white/[0.02]">
                             <div>
-                                <h3 className="text-2xl font-black text-white">{isEditing ? 'Modify Account' : 'Initialize Profile'}</h3>
-                                <p className="text-slate-400 font-medium text-sm">Set permissions and system access credentials</p>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white">{isEditing ? 'Modify Account' : 'Initialize Profile'}</h3>
+                                <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">Set permissions and system access credentials</p>
                             </div>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="p-2 hover:bg-white/5 rounded-full text-slate-500 hover:text-white transition-colors"
+                                className="p-2 hover:bg-slate-200 dark:bg-white/5 rounded-full text-slate-500 hover:text-slate-900 dark:text-white transition-colors"
                             >
                                 <X size={24} />
                             </button>
@@ -315,7 +315,7 @@ const UserManagement = () => {
                                     <input
                                         type="text"
                                         required
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
                                         value={formData.fullName}
                                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                     />
@@ -325,7 +325,7 @@ const UserManagement = () => {
                                     <input
                                         type="text"
                                         required
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
                                         value={formData.username}
                                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                                     />
@@ -333,7 +333,7 @@ const UserManagement = () => {
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Access Protocol (Role)</label>
                                     <select
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
                                         value={formData.role}
                                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                     >
@@ -343,7 +343,7 @@ const UserManagement = () => {
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Department Scope</label>
                                     <select
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
                                         value={formData.department}
                                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                                         required
@@ -354,7 +354,7 @@ const UserManagement = () => {
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Status</label>
                                     <select
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                     >
@@ -367,7 +367,7 @@ const UserManagement = () => {
                                     <input
                                         type="password"
                                         required={!isEditing}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     />
@@ -377,7 +377,7 @@ const UserManagement = () => {
                                     <input
                                         type="password"
                                         required={!isEditing && formData.password !== ''}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                     />

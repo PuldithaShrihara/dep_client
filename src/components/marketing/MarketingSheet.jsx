@@ -146,23 +146,23 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
 
     const getStatusStyles = (status) => {
         switch (status) {
-            case 'planning': return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+            case 'planning': return 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/30';
             case 'developing': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
             case 'under review': return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
             case 'on hold': return 'bg-rose-500/20 text-rose-300 border-rose-500/30';
             case 'published': return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-            default: return 'bg-white/5 text-slate-500 border-transparent';
+            default: return 'bg-slate-200 dark:bg-white/5 text-slate-500 border-transparent';
         }
     };
 
     const getPriorityStyles = (priority) => {
-        if (!priority) return 'bg-white/5 text-slate-500 border-transparent';
+        if (!priority) return 'bg-slate-200 dark:bg-white/5 text-slate-500 border-transparent';
         const p = priority.toLowerCase();
         switch (p) {
             case 'high': return 'bg-rose-500/20 text-rose-300 border-rose-500/30';
             case 'medium': return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
             case 'low': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-            default: return 'bg-white/5 text-slate-500 border-transparent';
+            default: return 'bg-slate-200 dark:bg-white/5 text-slate-500 border-transparent';
         }
     };
 
@@ -203,7 +203,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0f1d] rounded-[32px] overflow-hidden border border-white/5 shadow-2xl">
+        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
             {/* Header Section */}
             <div className="px-4 pt-4 pb-2 flex flex-col gap-4">
 
@@ -214,7 +214,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Strategy Title</label>
                             <div className="relative group">
                                 <input
-                                    className="w-full bg-[#1a1f2e] border border-white/5 rounded-2xl px-5 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                                    className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
                                     value={planData.title}
                                     onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
                                 />
@@ -223,7 +223,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Month</label>
                             <select
-                                className="w-full bg-[#1a1f2e] border border-white/5 rounded-2xl px-5 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none"
+                                className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none"
                                 value={planData.month}
                                 onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
                             >
@@ -237,7 +237,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Year</label>
                             <input
                                 type="number"
-                                className="w-full bg-[#1a1f2e] border border-white/5 rounded-2xl px-5 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                                className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
                                 value={planData.year}
                                 onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
                             />
@@ -247,9 +247,9 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                     <div className="w-64 space-y-2">
                         <div className="flex justify-between items-end mb-1">
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Success Rate</label>
-                            <span className="text-xs font-black text-slate-400">{stats.rate}%</span>
+                            <span className="text-xs font-black text-slate-600 dark:text-slate-400">{stats.rate}%</span>
                         </div>
-                        <div className="h-2 w-full bg-[#1a1f2e] rounded-full overflow-hidden border border-white/5">
+                        <div className="h-2 w-full bg-slate-50 dark:bg-[#1a1f2e] rounded-full overflow-hidden border border-slate-200 dark:border-white/5">
                             <div 
                                 className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000"
                                 style={{ width: `${stats.rate}%` }}
@@ -261,15 +261,15 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                 {/* Stat Cards */}
                 <div className="grid grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Tasks', value: stats.total, sub: 'this month', border: 'border-white/5' },
+                        { label: 'Total Tasks', value: stats.total, sub: 'this month', border: 'border-slate-200 dark:border-white/5' },
                         { label: 'Completed', value: stats.completed, sub: 'tasks done', border: 'border-emerald-500/30' },
                         { label: 'In Progress', value: stats.inProgress, sub: 'remaining', border: 'border-amber-500/30' },
-                        { label: 'Completion', value: `${stats.rate}%`, sub: 'success rate', border: 'border-indigo-500/30 text-white' }
+                        { label: 'Completion', value: `${stats.rate}%`, sub: 'success rate', border: 'border-indigo-500/30 text-slate-900 dark:text-white' }
                     ].map((s, i) => (
-                        <div key={i} className={`bg-[#1a1f2e]/50 border ${s.border} p-4 rounded-2xl`}>
+                        <div key={i} className={`bg-slate-50 dark:bg-[#1a1f2e]/50 border ${s.border} p-4 rounded-2xl`}>
                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{s.label}</p>
                             <div className="flex items-baseline gap-2">
-                                <h3 className="text-xl font-black text-white">{s.value}</h3>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white">{s.value}</h3>
                                 <span className="text-[10px] font-bold text-slate-500">{s.sub}</span>
                             </div>
                         </div>
@@ -277,7 +277,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                 </div>
 
                 {/* Tabs and Filters */}
-                <div className="flex items-center justify-between mt-4 border-b border-white/5 pb-2">
+                <div className="flex items-center justify-between mt-4 border-b border-slate-200 dark:border-white/5 pb-2">
                     <div className="flex gap-8">
                         {['Table View'].map(tab => (
                             <button
@@ -285,8 +285,8 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                 onClick={() => setActiveTab(tab.toLowerCase().split(' ')[0])}
                                 className={`pb-4 text-sm font-black transition-all relative ${
                                     activeTab === tab.toLowerCase().split(' ')[0] 
-                                    ? 'text-white' 
-                                    : 'text-slate-500 hover:text-slate-300'
+                                    ? 'text-slate-900 dark:text-white' 
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
                                 }`}
                             >
                                 {tab}
@@ -298,10 +298,10 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                     </div>
 
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="flex items-center bg-[#1a1f2e] border border-white/5 rounded-2xl px-4 py-2 text-slate-400">
+                        <div className="flex items-center bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2 text-slate-600 dark:text-slate-400">
                             <Search size={14} className="mr-3" />
                             <select 
-                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-300 cursor-pointer min-w-[120px]"
+                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[120px]"
                                 value={filterChannel}
                                 onChange={(e) => setFilterChannel(e.target.value)}
                             >
@@ -310,9 +310,9 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                 <option>Email</option>
                             </select>
                         </div>
-                        <div className="flex items-center bg-[#1a1f2e] border border-white/5 rounded-2xl px-4 py-2">
+                        <div className="flex items-center bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2">
                             <select 
-                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-300 cursor-pointer min-w-[120px]"
+                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[120px]"
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
                             >
@@ -333,7 +333,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                         </button>
                         <button 
                             onClick={addRow}
-                            className="flex items-center gap-1.5 px-3 py-1 bg-[#1a1f2e] hover:bg-[#252a3a] text-slate-300 border border-white/5 rounded-lg transition-all font-bold text-xs"
+                            className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-[#1a1f2e] hover:bg-slate-100 dark:bg-[#252a3a] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 rounded-lg transition-all font-bold text-xs"
                         >
                             <Plus size={12} /> Add Row
                         </button>
@@ -341,10 +341,10 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto custom-scrollbar bg-white/[0.01]">
+            <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50 dark:bg-white/[0.01]">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
-                    <thead className="sticky top-0 z-20 bg-[#0a0f1d]">
-                        <tr className="border-b border-white/5">
+                    <thead className="sticky top-0 z-20 bg-white dark:bg-[#0a0f1d]">
+                        <tr className="border-b border-slate-200 dark:border-white/5">
                             <th className="px-1 py-0.5 w-12 text-[10px] font-black text-slate-500 text-center uppercase tracking-[0.2em]">No.</th>
                             <th className="px-1 py-0.5 w-10"></th>
                             {columns.map(col => (
@@ -357,13 +357,13 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                         {tasks.map((task, idx) => {
                             const isPublished = (task.status || '').toLowerCase() === 'published';
                             return (
-                                <tr key={idx} className={`group hover:bg-white/[0.02] transition-colors ${isPublished ? 'bg-emerald-500/5' : ''}`}>
+                                <tr key={idx} className={`group hover:bg-slate-100 dark:bg-white/[0.02] transition-colors ${isPublished ? 'bg-emerald-500/5' : ''}`}>
                                     <td className="px-1 py-0.5 text-center">
-                                        <span className="text-[10px] font-black text-slate-600 group-hover:text-slate-400 transition-colors">{idx + 1}</span>
+                                        <span className="text-[10px] font-black text-slate-600 group-hover:text-slate-600 dark:text-slate-400 transition-colors">{idx + 1}</span>
                                     </td>
                                     <td className="px-1 py-0.5 text-center">
                                         <button
@@ -377,7 +377,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.product}
                                             onChange={(e) => handleInputChange(idx, 'product', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-200"
+                                            className="text-[12px] font-bold text-slate-900 dark:text-slate-200"
                                             placeholder="..."
                                         />
                                     </td>
@@ -385,7 +385,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.mediaType}
                                             onChange={(e) => handleInputChange(idx, 'mediaType', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-300"
+                                            className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
                                             placeholder="..."
                                         />
                                     </td>
@@ -393,7 +393,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.marketingChannel}
                                             onChange={(e) => handleInputChange(idx, 'marketingChannel', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-300"
+                                            className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
                                             placeholder="..."
                                         />
                                     </td>
@@ -401,14 +401,14 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.mainGoal}
                                             onChange={(e) => handleInputChange(idx, 'mainGoal', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-300"
+                                            className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
                                             placeholder="..."
                                         />
                                     </td>
                                     <td className="px-1 py-0.5 text-center">
                                         <button
                                             onClick={() => handleInputChange(idx, 'done', !task.done)}
-                                            className={`mx-auto w-4 h-4 rounded-md border flex items-center justify-center transition-all ${task.done ? 'bg-indigo-500 border-indigo-500 text-white' : 'bg-white/5 border-slate-700 text-transparent'}`}
+                                            className={`mx-auto w-4 h-4 rounded-md border flex items-center justify-center transition-all ${task.done ? 'bg-indigo-500 border-indigo-500 text-slate-900 dark:text-white' : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-slate-700 text-transparent dark:text-transparent'}`}
                                         >
                                             <CheckCircle size={10} />
                                         </button>
@@ -417,7 +417,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.description}
                                             onChange={(e) => handleInputChange(idx, 'description', e.target.value)}
-                                            className="text-[12px] font-medium text-slate-400"
+                                            className="text-[12px] font-medium text-slate-600 dark:text-slate-400"
                                             placeholder="..."
                                         />
                                     </td>
@@ -425,7 +425,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.outcome}
                                             onChange={(e) => handleInputChange(idx, 'outcome', e.target.value)}
-                                            className="text-[12px] font-medium text-slate-400"
+                                            className="text-[12px] font-medium text-slate-600 dark:text-slate-400"
                                             placeholder="..."
                                         />
                                     </td>
@@ -437,7 +437,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             <AutoResizeTextarea
                                                 value={task.owner}
                                                 onChange={(e) => handleInputChange(idx, 'owner', e.target.value)}
-                                                className="text-[12px] font-bold text-slate-300"
+                                                className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
                                                 placeholder="..."
                                             />
                                         </div>
@@ -449,12 +449,12 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                                 value={task.status}
                                                 onChange={(e) => handleInputChange(idx, 'status', e.target.value)}
                                             >
-                                                <option value="" className="bg-[#0a0f1d]">Select...</option>
-                                                <option value="planning" className="bg-[#0a0f1d]">Planning</option>
-                                                <option value="developing" className="bg-[#0a0f1d]">Developing</option>
-                                                <option value="under review" className="bg-[#0a0f1d]">Review</option>
-                                                <option value="on hold" className="bg-[#0a0f1d]">Hold</option>
-                                                <option value="published" className="bg-[#0a0f1d]">Published</option>
+                                                <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
+                                                <option value="planning" className="bg-white dark:bg-[#0a0f1d]">Planning</option>
+                                                <option value="developing" className="bg-white dark:bg-[#0a0f1d]">Developing</option>
+                                                <option value="under review" className="bg-white dark:bg-[#0a0f1d]">Review</option>
+                                                <option value="on hold" className="bg-white dark:bg-[#0a0f1d]">Hold</option>
+                                                <option value="published" className="bg-white dark:bg-[#0a0f1d]">Published</option>
                                             </select>
                                         </div>
                                     </td>
@@ -465,10 +465,10 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                                 value={task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}
                                                 onChange={(e) => handleInputChange(idx, 'priority', e.target.value)}
                                             >
-                                                <option value="" className="bg-[#0a0f1d]">Select...</option>
-                                                <option value="High" className="bg-[#0a0f1d]">High</option>
-                                                <option value="Medium" className="bg-[#0a0f1d]">Medium</option>
-                                                <option value="Low" className="bg-[#0a0f1d]">Low</option>
+                                                <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
+                                                <option value="High" className="bg-white dark:bg-[#0a0f1d]">High</option>
+                                                <option value="Medium" className="bg-white dark:bg-[#0a0f1d]">Medium</option>
+                                                <option value="Low" className="bg-white dark:bg-[#0a0f1d]">Low</option>
                                             </select>
                                         </div>
                                     </td>
@@ -477,7 +477,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             type="date"
                                             value={task.startDate}
                                             onChange={(e) => handleInputChange(idx, 'startDate', e.target.value)}
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
                                         />
                                     </td>
                                     <td className="px-1 py-0.5">
@@ -485,7 +485,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             type="date"
                                             value={task.endDate}
                                             onChange={(e) => handleInputChange(idx, 'endDate', e.target.value)}
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
                                         />
                                     </td>
                                     <td className="px-1 py-0.5">
@@ -502,7 +502,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             <AutoResizeTextarea
                                                 value={task.completedBy}
                                                 onChange={(e) => handleInputChange(idx, 'completedBy', e.target.value)}
-                                                className="text-[11px] font-bold text-slate-400"
+                                                className="text-[11px] font-bold text-slate-600 dark:text-slate-400"
                                             />
                                         </div>
                                     </td>
@@ -510,7 +510,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.completedTime}
                                             onChange={(e) => handleInputChange(idx, 'completedTime', e.target.value)}
-                                            className="text-[11px] font-bold text-slate-400"
+                                            className="text-[11px] font-bold text-slate-600 dark:text-slate-400"
                                         />
                                     </td>
                                     <td className="px-1 py-0.5">
@@ -519,7 +519,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             <AutoResizeTextarea
                                                 value={task.reportTo}
                                                 onChange={(e) => handleInputChange(idx, 'reportTo', e.target.value)}
-                                                className="text-[11px] font-bold text-slate-400"
+                                                className="text-[11px] font-bold text-slate-600 dark:text-slate-400"
                                             />
                                         </div>
                                     </td>

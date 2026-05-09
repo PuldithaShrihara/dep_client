@@ -141,32 +141,32 @@ const HrTaskHub = () => {
                 <div className="space-y-1">
                     <button
                         onClick={() => navigate('/')}
-                        className="flex items-center gap-2 text-indigo-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
+                        className="flex items-center gap-2 text-indigo-400 hover:text-slate-900 dark:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
                     >
                         <ArrowLeft size={14} />
                         Back to Nexus
                     </button>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2.5 bg-indigo-600 rounded-xl">
-                            <ClipboardCheck size={24} className="text-white" />
+                            <ClipboardCheck size={24} className="text-slate-900 dark:text-white" />
                         </div>
-                        <h1 className="text-4xl font-black text-white tracking-tight">HR Task Hub <span className="text-indigo-500">Board</span></h1>
+                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">HR Task Hub <span className="text-indigo-500">Board</span></h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
+                        <div className="px-3 py-1 bg-slate-200 dark:bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
                             <Calendar size={14} className="text-indigo-400" />
-                            <span className="text-xs font-bold text-slate-300">{monthNames[month - 1]} {year}</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{monthNames[month - 1]} {year}</span>
                         </div>
                         <span className="text-slate-500 text-sm font-medium">Monthly operational compliance and HR performance data</span>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:flex items-center gap-4 w-full md:w-auto">
-                    <div className="glass-panel border-white/5 px-6 py-4 rounded-3xl flex-1 md:min-w-[160px]">
+                    <div className="glass-panel border-slate-200 dark:border-white/5 px-6 py-4 rounded-3xl flex-1 md:min-w-[160px]">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Compliance Rate</p>
                         <div className="flex items-end gap-2">
-                            <span className="text-2xl font-black text-white">{stats.percentage}%</span>
-                            <div className="w-full bg-white/5 h-1.5 rounded-full mb-1.5 overflow-hidden">
+                            <span className="text-2xl font-black text-slate-900 dark:text-white">{stats.percentage}%</span>
+                            <div className="w-full bg-slate-200 dark:bg-white/5 h-1.5 rounded-full mb-1.5 overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-1000"
                                     style={{ width: `${stats.percentage}%` }}
@@ -174,10 +174,10 @@ const HrTaskHub = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="glass-panel border-white/5 px-6 py-4 rounded-3xl flex-1 md:min-w-[160px]">
+                    <div className="glass-panel border-slate-200 dark:border-white/5 px-6 py-4 rounded-3xl flex-1 md:min-w-[160px]">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Executed Tasks</p>
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl font-black text-white">{stats.completedCount}</span>
+                            <span className="text-2xl font-black text-slate-900 dark:text-white">{stats.completedCount}</span>
                             <span className="text-slate-500 font-bold">/ {stats.totalTasks}</span>
                         </div>
                     </div>
@@ -195,19 +195,19 @@ const HrTaskHub = () => {
                 {areas.map((area, idx) => (
                     <div
                         key={area.id}
-                        className="group flex flex-col glass-panel border-white/5 rounded-[40px] p-8 hover:border-indigo-500/30 transition-all duration-500 hover:translate-y-[-4px]"
+                        className="group flex flex-col glass-panel border-slate-200 dark:border-white/5 rounded-[40px] p-8 hover:border-indigo-500/30 transition-all duration-500 hover:translate-y-[-4px]"
                         style={{ animationDelay: `${idx * 0.1}s` }}
                     >
                         <div className="flex justify-between items-start mb-6">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">{area.category}</span>
-                                <h2 className="text-xl font-black text-white group-hover:text-indigo-300 transition-colors uppercase leading-tight">{area.title}</h2>
+                                <h2 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-indigo-300 transition-colors uppercase leading-tight">{area.title}</h2>
                                 <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase">
                                     <Clock size={10} />
                                     <span>{area.frequency} CHECK</span>
                                 </div>
                             </div>
-                            <div className="p-3 bg-white/5 rounded-2xl">
+                            <div className="p-3 bg-slate-200 dark:bg-white/5 rounded-2xl">
                                 <BarChart3 size={20} className="text-indigo-400 opacity-50" />
                             </div>
                         </div>
@@ -220,7 +220,7 @@ const HrTaskHub = () => {
                                         <div
                                             className={`group/task flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 ${completion
                                                     ? 'bg-indigo-500/10 border-indigo-500/20'
-                                                    : 'bg-white/[0.02] border-white/5 hover:border-white/20'
+                                                    : 'bg-slate-100 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:border-white/20'
                                                 }`}
                                         >
                                             <div 
@@ -255,7 +255,7 @@ const HrTaskHub = () => {
                                                 }}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <p className={`text-sm font-bold transition-colors ${completion ? 'text-white' : 'text-slate-400'} ${(['Joined staff updates', 'Policy renewal', 'New members adding', 'Resigned members removing', 'Claim handling'].includes(task.label)) ? 'group-hover/label:text-indigo-400' : ''}`}>
+                                                    <p className={`text-sm font-bold transition-colors ${completion ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'} ${(['Joined staff updates', 'Policy renewal', 'New members adding', 'Resigned members removing', 'Claim handling'].includes(task.label)) ? 'group-hover/label:text-indigo-400' : ''}`}>
                                                         {task.label}
                                                     </p>
                                                     {(['Joined staff updates', 'Policy renewal', 'New members adding', 'Resigned members removing', 'Claim handling'].includes(task.label)) && (
@@ -282,8 +282,8 @@ const HrTaskHub = () => {
                                                     setExpandedTaskId(expandedTaskId === task.id ? null : task.id);
                                                 }}
                                                 className={`p-2.5 rounded-xl transition-all duration-300 border flex items-center justify-center ${expandedTaskId === task.id 
-                                                    ? 'bg-indigo-600 border-indigo-500/30 text-white shadow-lg shadow-indigo-500/20' 
-                                                    : 'bg-white/[0.03] border-white/5 text-slate-600 hover:bg-white/10 hover:border-white/20'
+                                                    ? 'bg-indigo-600 border-indigo-500/30 text-slate-900 dark:text-white shadow-lg shadow-indigo-500/20' 
+                                                    : 'bg-white/[0.03] border-slate-200 dark:border-white/5 text-slate-600 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                             >
                                                 <ChevronDown 
@@ -299,7 +299,7 @@ const HrTaskHub = () => {
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned By (Main)</label>
                                                         <select
-                                                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-indigo-500/50 transition-all font-bold appearance-none cursor-pointer outline-none"
+                                                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:border-indigo-500/50 transition-all font-bold appearance-none cursor-pointer outline-none"
                                                             value={completion ? (completion.memberId || '') : (draftValues[task.id]?.memberId || members[0]?.id || '')}
                                                             onChange={(e) => {
                                                                 if (completion) {
@@ -319,7 +319,7 @@ const HrTaskHub = () => {
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Observed By</label>
                                                         <select
-                                                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-indigo-500/50 transition-all font-bold appearance-none cursor-pointer outline-none"
+                                                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:border-indigo-500/50 transition-all font-bold appearance-none cursor-pointer outline-none"
                                                             value={completion ? (completion.observedById || '') : (draftValues[task.id]?.observedByMemberId || members[0]?.id || '')}
                                                             onChange={(e) => {
                                                                 if (completion) {
@@ -340,7 +340,7 @@ const HrTaskHub = () => {
                                                 <div className="pt-2">
                                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Operational Remarks & Notes</label>
                                                     <textarea
-                                                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-300 focus:border-indigo-500/50 transition-all font-medium mt-2 resize-none min-h-[80px]"
+                                                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-700 dark:text-slate-300 focus:border-indigo-500/50 transition-all font-medium mt-2 resize-none min-h-[80px]"
                                                         placeholder="Document findings or execution hurdles here..."
                                                         value={completion ? (completion.remarks || '') : (draftValues[task.id]?.remarks || '')}
                                                         onChange={(e) => {
@@ -378,17 +378,17 @@ const HrTaskHub = () => {
                             })}
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Progress</div>
                                 <div className="flex items-center gap-1">
                                     <CheckCircle2 size={12} className="text-indigo-500" />
-                                    <span className="text-xs font-black text-white">
+                                    <span className="text-xs font-black text-slate-900 dark:text-white">
                                         {area.tasks.filter(t => completions.find(c => c.taskId === t.id)).length} / {area.tasks.length}
                                     </span>
                                 </div>
                             </div>
-                            <button className="p-2 hover:bg-white/5 rounded-full text-slate-500 hover:text-white transition-colors">
+                            <button className="p-2 hover:bg-slate-200 dark:bg-white/5 rounded-full text-slate-500 hover:text-slate-900 dark:text-white transition-colors">
                                 <MoreHorizontal size={18} />
                             </button>
                         </div>

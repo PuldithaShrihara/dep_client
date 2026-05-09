@@ -165,21 +165,21 @@ const NewEmployeeSheet = () => {
                 <div className="space-y-1">
                     <button
                         onClick={() => navigate(`/admin/hr?month=${month}&year=${year}`)}
-                        className="flex items-center gap-2 text-indigo-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
+                        className="flex items-center gap-2 text-indigo-400 hover:text-slate-900 dark:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
                     >
                         <ArrowLeft size={14} />
                         Back to HR Task Hub
                     </button>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2.5 bg-indigo-600 rounded-xl">
-                            <UserPlus size={24} className="text-white" />
+                            <UserPlus size={24} className="text-slate-900 dark:text-white" />
                         </div>
-                        <h1 className="text-4xl font-black text-white tracking-tight">New Joiners <span className="text-indigo-500">Registry</span></h1>
+                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">New Joiners <span className="text-indigo-500">Registry</span></h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
+                        <div className="px-3 py-1 bg-slate-200 dark:bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
                             <Calendar size={14} className="text-indigo-400" />
-                            <span className="text-xs font-bold text-slate-300">{monthNames[month - 1]} {year}</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{monthNames[month - 1]} {year}</span>
                         </div>
                         <span className="text-slate-500 text-sm font-medium">Onboarding details for newly recruited staff</span>
                     </div>
@@ -188,7 +188,7 @@ const NewEmployeeSheet = () => {
                 <div className="flex gap-3 w-full md:w-auto md:mr-12">
                     <button
                         onClick={addRow}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-200 dark:bg-white/5 hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white border border-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest"
                     >
                         <Plus size={14} /> Add Entry
                     </button>
@@ -210,14 +210,14 @@ const NewEmployeeSheet = () => {
             )}
 
             {/* Table Container */}
-            <div className="glass-panel border-white/5 rounded-[40px] overflow-hidden flex flex-col bg-[#020617]/40 backdrop-blur-md">
+            <div className="glass-panel border-slate-200 dark:border-white/5 rounded-[40px] overflow-hidden flex flex-col bg-[#020617]/40 backdrop-blur-md">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-max table-fixed">
                         <thead>
                             <tr className="bg-indigo-600/90 border-b border-indigo-500/20">
                                 <th className="p-2 w-16 bg-indigo-700/50"></th>
                                 {columns.map(col => (
-                                    <th key={col.key} className={`p-2.5 text-[10px] font-black text-white uppercase tracking-widest ${col.width}`}>
+                                    <th key={col.key} className={`p-2.5 text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest ${col.width}`}>
                                         <div className="flex items-center gap-2">
                                             <span className="p-1 bg-white/10 rounded-lg">{col.icon}</span>
                                             <span>{col.label}</span>
@@ -226,10 +226,10 @@ const NewEmployeeSheet = () => {
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5 bg-slate-900/20">
+                        <tbody className="divide-y divide-slate-200 dark:divide-white/5 bg-slate-900/20">
                             {entries.map((entry, idx) => (
-                                <tr key={idx} className="group hover:bg-indigo-500/[0.03] transition-colors divide-x divide-white/5">
-                                    <td className="p-2 text-center bg-white/[0.02]">
+                                <tr key={idx} className="group hover:bg-indigo-500/[0.03] transition-colors divide-x divide-slate-200 dark:divide-white/5">
+                                    <td className="p-2 text-center bg-slate-100 dark:bg-white/[0.02]">
                                         <button
                                             onClick={() => removeRow(idx)}
                                             className="p-2 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
@@ -245,14 +245,14 @@ const NewEmployeeSheet = () => {
                                                     type="date"
                                                     value={entry[col.key] || ''}
                                                     onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-[12px] text-slate-200 px-2 py-1.5 [color-scheme:dark] font-medium"
+                                                    className="w-full bg-transparent border-none focus:ring-0 text-[12px] text-slate-900 dark:text-slate-200 px-2 py-1.5 [color-scheme:dark] font-medium"
                                                 />
                                             ) : (
                                                 <AutoResizeTextarea
                                                     value={entry[col.key] || ''}
                                                     onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
                                                     placeholder={`Enter ${col.label.toLowerCase()}...`}
-                                                    className="text-[12px] text-slate-200 px-2 py-1.5 font-medium placeholder:text-slate-700"
+                                                    className="text-[12px] text-slate-900 dark:text-slate-200 px-2 py-1.5 font-medium placeholder:text-slate-700"
                                                 />
                                             )}
                                         </td>

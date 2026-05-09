@@ -225,7 +225,7 @@ const ResignedEmployeeSheet = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-400">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-600 dark:text-slate-400">
                 <Loader2 className="w-12 h-12 text-rose-500 animate-spin" />
                 <p className="text-[10px] font-black uppercase tracking-widest">
                     Accessing Exit Records...
@@ -240,26 +240,26 @@ const ResignedEmployeeSheet = () => {
                 <div className="space-y-1">
                     <button
                         onClick={() => navigate(`/admin/hr?month=${month}&year=${year}`)}
-                        className="flex items-center gap-2 text-rose-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
+                        className="flex items-center gap-2 text-rose-400 hover:text-slate-900 dark:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
                     >
                         <ArrowLeft size={14} />
                         Nexus Task Hub
                     </button>
 
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-rose-600 rounded-xl shadow-lg shadow-rose-600/20 text-white">
+                        <div className="p-2.5 bg-rose-600 rounded-xl shadow-lg shadow-rose-600/20 text-slate-900 dark:text-white">
                             <UserX size={24} />
                         </div>
 
-                        <h1 className="text-4xl font-black text-white tracking-tight">
+                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                             Resigned Employee <span className="text-rose-500">Registry</span>
                         </h1>
                     </div>
 
                     <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
-                        <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 backdrop-blur-sm">
+                        <div className="px-3 py-1 bg-slate-200 dark:bg-white/5 border border-white/10 rounded-full flex items-center gap-2 backdrop-blur-sm">
                             <Calendar size={14} className="text-rose-400" />
-                            <span className="text-white">
+                            <span className="text-slate-900 dark:text-white">
                                 {monthNames[month - 1]} {year}
                             </span>
                         </div>
@@ -268,7 +268,7 @@ const ResignedEmployeeSheet = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+                <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-white/5 backdrop-blur-md">
                     <div className="flex flex-col items-end">
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">
                             Status Legend
@@ -277,7 +277,7 @@ const ResignedEmployeeSheet = () => {
                         <div className="flex gap-2">
                             {[
                                 { label: 'Completed', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                                { label: 'Pending', color: 'text-slate-500 bg-white/5 border-white/10' }
+                                { label: 'Pending', color: 'text-slate-500 bg-slate-200 dark:bg-white/5 border-white/10' }
                             ].map(s => (
                                 <span
                                     key={s.label}
@@ -298,11 +298,11 @@ const ResignedEmployeeSheet = () => {
                 </div>
             )}
 
-            <div className="glass-panel border-white/5 rounded-[40px] overflow-hidden flex flex-col bg-[#020617]/40 backdrop-blur-xl shadow-2xl">
+            <div className="glass-panel border-slate-200 dark:border-white/5 rounded-[40px] overflow-hidden flex flex-col bg-[#020617]/40 backdrop-blur-xl shadow-2xl">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[1400px]">
                         <thead>
-                            <tr className="bg-slate-900/80 border-b border-white/5">
+                            <tr className="bg-slate-900/80 border-b border-slate-200 dark:border-white/5">
                                 <th className="p-4 w-12"></th>
 
                                 <th className="p-4 w-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
@@ -352,9 +352,9 @@ const ResignedEmployeeSheet = () => {
                             </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                             {entries.map((entry, idx) => (
-                                <tr key={idx} className="group hover:bg-white/[0.02] transition-all">
+                                <tr key={idx} className="group hover:bg-slate-100 dark:bg-white/[0.02] transition-all">
                                     <td className="p-4 text-center">
                                         <button
                                             onClick={() => deleteRow(idx)}
@@ -379,7 +379,7 @@ const ResignedEmployeeSheet = () => {
                                             value={entry.fullName || ''}
                                             onChange={(e) => handleInputChange(idx, 'fullName', e.target.value)}
                                             placeholder="Member Name..."
-                                            className="text-xs text-white font-bold px-2 py-2"
+                                            className="text-xs text-slate-900 dark:text-white font-bold px-2 py-2"
                                         />
                                     </td>
 
@@ -387,7 +387,7 @@ const ResignedEmployeeSheet = () => {
                                         <select
                                             value={entry.department || ''}
                                             onChange={(e) => handleInputChange(idx, 'department', e.target.value)}
-                                            className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest outline-none focus:border-rose-500/50 appearance-none cursor-pointer"
+                                            className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-1.5 text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest outline-none focus:border-rose-500/50 appearance-none cursor-pointer"
                                         >
                                             <option value="">Select...</option>
 
@@ -411,7 +411,7 @@ const ResignedEmployeeSheet = () => {
                                                 }
                                                 className={`p-2 rounded-xl border transition-all duration-300 transform hover:scale-110 flex items-center justify-center mx-auto ${entry.tasks && entry.tasks[tc.key] === 'Done'
                                                         ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/10'
-                                                        : 'bg-white/[0.03] border-white/5 text-slate-700 hover:border-white/20'
+                                                        : 'bg-white/[0.03] border-slate-200 dark:border-white/5 text-slate-700 hover:border-white/20'
                                                     }`}
                                             >
                                                 {entry.tasks && entry.tasks[tc.key] === 'Done' ? (
@@ -431,7 +431,7 @@ const ResignedEmployeeSheet = () => {
                                                 handleInputChange(idx, 'observedById', e.target.value);
                                                 handleInputChange(idx, 'observedByName', m ? m.name : '');
                                             }}
-                                            className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-2 py-1.5 text-[9px] font-black text-slate-300 uppercase tracking-widest outline-none focus:border-rose-500/50 appearance-none cursor-pointer text-center"
+                                            className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-2 py-1.5 text-[9px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest outline-none focus:border-rose-500/50 appearance-none cursor-pointer text-center"
                                         >
                                             <option value="">Select...</option>
 
@@ -457,8 +457,8 @@ const ResignedEmployeeSheet = () => {
                                             onClick={() => saveEntry(idx)}
                                             disabled={saving}
                                             className={`p-2.5 rounded-xl transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50 ${entry._id || entry.id
-                                                    ? 'bg-rose-600 hover:bg-rose-500 text-white'
-                                                    : 'bg-white/5 text-slate-600 hover:text-white border border-white/10'
+                                                    ? 'bg-rose-600 hover:bg-rose-500 text-slate-900 dark:text-white'
+                                                    : 'bg-slate-200 dark:bg-white/5 text-slate-600 hover:text-slate-900 dark:text-white border border-white/10'
                                                 }`}
                                         >
                                             <Save size={16} />
@@ -470,10 +470,10 @@ const ResignedEmployeeSheet = () => {
                     </table>
                 </div>
 
-                <div className="p-8 bg-slate-900/20 flex justify-between items-center border-t border-white/5">
+                <div className="p-8 bg-slate-900/20 flex justify-between items-center border-t border-slate-200 dark:border-white/5">
                     <button
                         onClick={addRow}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-slate-200 dark:bg-white/5 hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-white border border-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest"
                     >
                         <Plus size={14} /> Add Exit Row
                     </button>
