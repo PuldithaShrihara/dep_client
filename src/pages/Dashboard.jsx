@@ -369,6 +369,7 @@ const Dashboard = () => {
                 subtitle="CORE SYSTEM DPMS v4.0" 
                 iconBg="bg-indigo-600"
                 showNexusLink={false}
+                showUsersLink={false}
             />
 
             <main className="max-w-7xl mx-auto px-6 py-8 relative">

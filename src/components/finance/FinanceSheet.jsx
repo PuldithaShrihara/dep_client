@@ -5,6 +5,7 @@ import {
     FileText, Clock, ChevronDown, CheckSquare, Cloud, DollarSign, File
 } from 'lucide-react';
 import { API_ORIGIN } from '../../config';
+import Header from '../common/Header';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -194,33 +195,35 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
 
     return (
         <div className="flex flex-col h-full bg-[#020617]/50 rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5">
-            <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/[0.02] flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-600/20 rounded-lg">
-                            <DollarSign className="text-emerald-400" size={18} />
-                        </div>
-                        <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">
-                            {isNew ? 'Initialize New Finance Plan' : 'Finance Execution Sheet'}
-                        </h4>
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={addRow}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-white/5 hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white rounded-xl transition-all text-xs font-bold"
-                        >
-                            <Plus size={14} /> Add Row
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-900 dark:text-white rounded-xl transition-all text-xs font-black shadow-lg shadow-emerald-600/20"
-                        >
-                            {saving ? 'Saving...' : <><Save size={14} /> Save</>}
-                        </button>
-                    </div>
+            <Header 
+                title="Finance Department" 
+                subtitle={`${planData.month} ${planData.year} - ${planData.title || 'Execution Sheet'}`}
+                icon={DollarSign}
+                iconBg="bg-emerald-600"
+                showUsersLink={false}
+            />
+            <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/[0.02] flex items-center justify-between">
+                <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-2">
+                    <DollarSign size={16} className="text-emerald-500" />
+                    Finance Operations
+                </h4>
+                <div className="flex gap-3">
+                    <button
+                        onClick={addRow}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-white/5 hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white rounded-xl transition-all text-xs font-bold"
+                    >
+                        <Plus size={14} /> Add Row
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-900 dark:text-white rounded-xl transition-all text-xs font-black shadow-lg shadow-emerald-600/20"
+                    >
+                        {saving ? 'Saving...' : <><Save size={14} /> Save</>}
+                    </button>
                 </div>
+            </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 entrance-animation">
                     <div className="space-y-1">
@@ -283,8 +286,7 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                         </div>
                     </div>
                 </div>
-            </div>
-
+            
             <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50/5">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#059669]">

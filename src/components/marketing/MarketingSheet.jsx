@@ -6,6 +6,8 @@ import {
     MoreHorizontal, Download, Layout, Search
 } from 'lucide-react';
 import { API_ORIGIN } from '../../config';
+import Header from '../common/Header';
+import { TrendingUp } from 'lucide-react';
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
@@ -204,6 +206,13 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
+            <Header 
+                title="Marketing Department" 
+                subtitle={`${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
+                icon={TrendingUp}
+                iconBg="bg-indigo-600"
+                showUsersLink={false}
+            />
             {/* Header Section */}
             <div className="px-4 pt-4 pb-2 flex flex-col gap-4">
 
