@@ -5,10 +5,11 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import {
-    LayoutDashboard, LogOut, Briefcase, DollarSign, Cpu,
+    Briefcase, DollarSign, Cpu,
     ShieldCheck, Factory, TrendingUp, Users, Calendar, ArrowUpRight,
     X, Plus, Clock, Target, CheckCircle2, Trash2
 } from 'lucide-react';
+import Header from '../components/common/Header';
 
 import MarketingSheet from '../components/marketing/MarketingSheet.jsx';
 import RnDSheet from '../components/rnd/RnDSheet.jsx';
@@ -57,6 +58,8 @@ function planHasProgressData(plan, deptName) {
 
     return plan.tasks?.length > 0;
 }
+
+
 
 const Dashboard = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -361,49 +364,12 @@ const Dashboard = () => {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/[0.1] rounded-full blur-[120px] dark:bg-violet-600/10" />
             </div>
 
-            <nav className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/90 dark:bg-slate-950/90 dark:border-white/10 backdrop-blur-xl shadow-sm shadow-slate-200/30 dark:shadow-none">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
-                                <LayoutDashboard className="text-white" size={20} />
-                            </div>
-
-                            <div className="flex flex-col">
-                                <span className="text-lg font-black tracking-tight leading-none text-slate-900 dark:text-white">
-                                    CORE <span className="text-indigo-500">SYSTEM</span>
-                                </span>
-                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
-                                    DPMS v4.0
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 sm:gap-6">
-                            <ThemeToggle />
-
-                            {isAdmin(user?.role) && (
-                                <Link
-                                    to="/admin"
-                                    className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-widest text-violet-700 hover:text-violet-900 bg-violet-100 hover:bg-violet-200/80 rounded-xl border border-violet-200 dark:text-violet-300 dark:hover:text-white dark:bg-violet-500/10 dark:hover:bg-violet-500/20 dark:border-violet-500/20"
-                                >
-                                    <Users size={14} />
-                                    Admin
-                                </Link>
-                            )}
-
-                            <button
-                                type="button"
-                                onClick={logout}
-                                className="group flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-all bg-white/80 hover:bg-red-50 rounded-xl border border-slate-200 hover:border-red-200 dark:text-slate-400 dark:hover:text-white dark:bg-white/5 dark:hover:bg-red-500/20 dark:border-white/5 dark:hover:border-red-500/30"
-                            >
-                                <LogOut size={16} className="group-hover:rotate-12 transition-transform" />
-                                <span className="hidden sm:inline">Logout</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Header 
+                title="Department Nexus" 
+                subtitle="CORE SYSTEM DPMS v4.0" 
+                iconBg="bg-indigo-600"
+                showNexusLink={false}
+            />
 
             <main className="max-w-7xl mx-auto px-6 py-8 relative">
                 <header className="mb-12 entrance-animation">
