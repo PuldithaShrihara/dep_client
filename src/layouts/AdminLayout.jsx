@@ -34,7 +34,11 @@ const AdminLayout = () => {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center py-3 sm:h-auto sm:py-0 sm:min-h-[4rem]">
                         <div className="flex items-center gap-4">
-                            <div className="p-2 bg-violet-600 rounded-xl shadow-lg shadow-violet-600/20 shrink-0">
+                            <div 
+                                className="p-2 bg-violet-600 rounded-xl shadow-lg shadow-violet-600/20 shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                onClick={() => window.location.href = '/dashboard'}
+                                title="Go to Dashboard"
+                            >
                                 <LayoutDashboard className="text-white" size={20} />
                             </div>
                             <div>

@@ -70,7 +70,13 @@ export function serializeRdMainTasksForApi(mains) {
     return mains.map((m) => ({
         ...(isValidMongoId(m._id) ? { _id: m._id } : {}),
         title: m.title || '',
+        responsible: m.responsible || '',
+        assignedEmployee: m.assignedEmployee || '',
         status: m.status || 'planning',
+        remark: m.remark || '',
+        startDate: m.startDate || '',
+        endDate: m.endDate || '',
+        isDone: !!m.isDone,
         isManualStatusOverride: !!m.isManualStatusOverride,
         subtasks: (m.subtasks || []).map((s) => ({
             ...(isValidMongoId(s._id) ? { _id: s._id } : {}),
@@ -100,14 +106,14 @@ export function flattenNestedRdTasksToLegacy(mains) {
         rows.push({
             product: main.title || '',
             mediaType: '',
-            marketingChannel: '',
+            marketingChannel: main.responsible || '',
             status: main.status || 'planning',
-            mainGoal: '',
+            mainGoal: main.remark || '',
             description: '',
-            owner: '',
-            startDate: '',
-            endDate: '',
-            done: (main.status || '').toLowerCase() === 'completed'
+            owner: main.assignedEmployee || '',
+            startDate: main.startDate || '',
+            endDate: main.endDate || '',
+            done: main.isDone || (main.status || '').toLowerCase() === 'completed'
         });
 
         // Subtask rows

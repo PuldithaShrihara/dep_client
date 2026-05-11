@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
@@ -34,6 +35,127 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     );
 };
 
+const EmployeeMultiSelect = ({ value, onChange, employees }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef(null);
+    const dropdownRef = React.useRef(null);
+    const [dropdownStyles, setDropdownStyles] = useState({});
+
+    const selectedList = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    const toggleSelection = (empName) => {
+        let newList;
+        if (selectedList.includes(empName)) {
+            newList = selectedList.filter(name => name !== empName);
+        } else {
+            newList = [...selectedList, empName];
+        }
+        onChange(newList.join(', '));
+    };
+
+    const handleOpen = () => {
+        if (!isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const width = Math.max(rect.width, 250);
+            
+            let left = rect.left;
+            if (left + width > window.innerWidth) {
+                left = window.innerWidth - width - 10;
+            }
+
+            let styles = {
+                position: 'fixed',
+                left: `${left}px`,
+                width: `${width}px`,
+                zIndex: 99999
+            };
+
+            // Estimate dropdown height up to 300px
+            if (rect.bottom + 300 > window.innerHeight && rect.top > 300) {
+                styles.bottom = `${window.innerHeight - rect.top + 4}px`;
+                styles.maxHeight = `${rect.top - 20}px`;
+            } else {
+                styles.top = `${rect.bottom + 4}px`;
+                styles.maxHeight = `${window.innerHeight - rect.bottom - 20}px`;
+            }
+
+            setDropdownStyles(styles);
+        }
+        setIsOpen(!isOpen);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                containerRef.current && !containerRef.current.contains(event.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(event.target)
+            ) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Close on scroll to prevent detachment from the cell
+    useEffect(() => {
+        const handleScroll = (e) => {
+            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        window.addEventListener('scroll', handleScroll, true);
+        return () => window.removeEventListener('scroll', handleScroll, true);
+    }, [isOpen]);
+
+    return (
+        <div className="relative w-full" ref={containerRef}>
+            <div 
+                className="w-full text-[13px] text-slate-900 dark:text-slate-200 py-1 cursor-pointer min-h-[28px] hover:bg-black/5 dark:hover:bg-white/5 rounded transition-colors break-words whitespace-pre-wrap flex items-center"
+                onClick={handleOpen}
+            >
+                {value || <span className="text-slate-500 opacity-50">Select employees...</span>}
+            </div>
+            
+            {isOpen && createPortal(
+                <div 
+                    ref={dropdownRef}
+                    style={dropdownStyles}
+                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-2 overflow-y-auto custom-scrollbar entrance-animation"
+                >
+                    {employees.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-slate-500">Loading or no employees found</div>
+                    ) : (
+                        employees.map(emp => {
+                            const empName = emp.fullName || emp.username;
+                            const isSelected = selectedList.includes(empName);
+                            return (
+                                <div 
+                                    key={emp._id}
+                                    className="flex items-center gap-3 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        toggleSelection(empName);
+                                    }}
+                                >
+                                    <input 
+                                        type="checkbox" 
+                                        checked={isSelected}
+                                        readOnly
+                                        className="rounded border-slate-300 dark:border-slate-600 text-amber-500 focus:ring-amber-500 bg-transparent w-3.5 h-3.5 cursor-pointer"
+                                    />
+                                    <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300">{empName}</span>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+};
+
 const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = false, onSuccess, deptId, initialTitle = '', initialMonth = '', initialYear = new Date().getFullYear(), initialTarget = '', initialDescription = '' }) => {
     const [planData, setPlanData] = useState({
         title: initialTitle,
@@ -42,6 +164,22 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
         target: initialTarget,
         description: initialDescription
     });
+
+    const [employees, setEmployees] = useState([]);
+
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            try {
+                const res = await axios.get(`${API_ORIGIN}/api/users`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+                setEmployees(res.data);
+            } catch (err) {
+                console.error('Failed to fetch employees', err);
+            }
+        };
+        fetchEmployees();
+    }, []);
 
     const resolvedTasks = initialRdMainTasks?.length > 0 
         ? flattenNestedRdTasksToLegacy(initialRdMainTasks) 
@@ -118,7 +256,28 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
     const handleInputChange = (index, key, value) => {
         setTasks(prev => {
             const next = [...prev];
-            next[index] = { ...next[index], [key]: value };
+            const task = next[index];
+            next[index] = { ...task, [key]: value };
+
+            const isSubtask = task._isSubtask || (task.product === '' && task.mediaType !== '');
+            
+            if (!isSubtask) {
+                if ((key === 'status' && value === 'completed') || (key === 'done' && value === true)) {
+                    let i = index + 1;
+                    while (i < next.length) {
+                        const sub = next[i];
+                        const subIsSubtask = sub._isSubtask || (sub.product === '' && sub.mediaType !== '');
+                        
+                        if (!subIsSubtask) {
+                            break;
+                        }
+                        
+                        next[i] = { ...sub, [key]: value };
+                        i++;
+                    }
+                }
+            }
+
             return next;
         });
     };
@@ -151,7 +310,7 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
             product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
-            completedTime: '', reportTo: ''
+            completedTime: '', reportTo: '', _isSubtask: true
         };
 
         const newTasks = [
@@ -275,9 +434,12 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Success Percentage</label>
                         <div className="w-full bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-sm font-black text-amber-400 flex items-center justify-between">
                             <span>{(() => {
-                                const activeTasks = tasks.filter(t => t.product?.trim() || t.mediaType?.trim());
-                                const total = activeTasks.length;
-                                const done = activeTasks.filter(t => {
+                                const activeMainTasks = tasks.filter(t => {
+                                    const isSubtask = t._isSubtask || (t.product === '' && t.mediaType !== '');
+                                    return !isSubtask && t.product?.trim();
+                                });
+                                const total = activeMainTasks.length;
+                                const done = activeMainTasks.filter(t => {
                                     const status = (t.status || '').toLowerCase();
                                     return t.done || status === 'completed' || status === 'published';
                                 }).length;
@@ -455,12 +617,12 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                     />
                                 </td>
                                 <td className="p-1">
-                                    <div className="flex items-center gap-2 px-2">
-                                        <User size={12} className="text-slate-500" />
-                                        <AutoResizeTextarea
+                                    <div className="flex items-start gap-2 px-2 pt-1">
+                                        <User size={12} className="text-slate-500 mt-1 shrink-0" />
+                                        <EmployeeMultiSelect
                                             value={task.owner}
-                                            onChange={(e) => handleInputChange(idx, 'owner', e.target.value)}
-                                            className="text-[13px] text-slate-900 dark:text-slate-200 py-1"
+                                            onChange={(val) => handleInputChange(idx, 'owner', val)}
+                                            employees={employees}
                                         />
                                     </div>
                                 </td>
