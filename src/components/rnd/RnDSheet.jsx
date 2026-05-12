@@ -158,7 +158,20 @@ const EmployeeMultiSelect = ({ value, onChange, employees }) => {
     );
 };
 
-const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = false, onSuccess, deptId, initialTitle = '', initialMonth = '', initialYear = new Date().getFullYear(), initialTarget = '', initialDescription = '' }) => {
+const RnDSheet = ({ 
+    planId, 
+    initialTasks = [], 
+    initialRdMainTasks = [], 
+    isNew = false, 
+    onSuccess, 
+    deptId, 
+    initialTitle = '', 
+    initialMonth = '', 
+    initialYear = new Date().getFullYear(), 
+    initialTarget = '', 
+    initialDescription = '',
+    filterProduct = null
+}) => {
     const [planData, setPlanData] = useState({
         title: initialTitle,
         month: initialMonth,
@@ -204,18 +217,6 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
             }).map(row => ({ ...row })));
         }
     }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, isNew, initialRdMainTasks, initialTasks]);
-
-    // Columns Mapping for R&D:
-    // Task -> product
-    // sub task -> mediaType
-    // responsible -> marketingChannel
-    // status -> status (custom styles)
-    // remark (1) -> mainGoal
-    // assigned employee -> owner
-    // start date -> startDate
-    // end date -> endDate
-    // remark (2) -> description
-    // done -> done
 
     const [tasks, setTasks] = useState(resolvedTasks?.length > 0 ? resolvedTasks : Array(40).fill({
         product: '',      // Task
@@ -468,10 +469,10 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">
-                            <th className="p-2 w-12 bg-[#b45309] text-[11px] font-bold text-slate-900 dark:text-white text-center uppercase tracking-tight">No.</th>
+                            <th className="p-2 w-12 bg-[#b45309] text-[12px] font-black text-slate-900 dark:text-white text-center uppercase tracking-tight">No.</th>
                             <th className="p-2 w-10 bg-[#b45309]"></th>
                             {columns.map(col => (
-                                <th key={col.key} className={`p-2 text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-tight ${col.width}`}>
+                                <th key={col.key} className={`p-2 text-[12px] font-black text-slate-900 dark:text-white uppercase tracking-tight ${col.width}`}>
                                     <div className="flex items-center gap-2">
                                         {col.icon}
                                         <span>{col.label}</span>
@@ -488,6 +489,15 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
 
                             tasks.forEach((task, idx) => {
                                 const isSubtask = task._isSubtask || (task.product === '' && task.mediaType !== '');
+                                
+                                // Apply product filter
+                                if (filterProduct) {
+                                    // If it's a main task, check if it matches
+                                    if (!isSubtask && task.product !== filterProduct) return;
+                                    // If it's a subtask, it belongs to the previous main task
+                                    // So we only keep it if the current main task being processed matches
+                                    if (isSubtask && tasks.slice(0, idx).reverse().find(t => t.product && !t._isSubtask)?.product !== filterProduct) return;
+                                }
                                 
                                 let displayNumber = '';
                                 if (!isSubtask) {
@@ -529,7 +539,7 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                 return (
                                 <tr key={idx} className={`group hover:bg-amber-500/5 transition-colors divide-x divide-slate-200/10 ${isCompleted ? 'bg-emerald-500/20' : ''}`}>
                                     <td className={`p-1 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'}`}>
-                                        <span className={isSubtask ? 'text-[10px] opacity-60' : 'text-[12px]'}>
+                                        <span className={isSubtask ? 'text-[12px] opacity-60' : 'text-[14px]'}>
                                             {displayNumber}
                                         </span>
                                     </td>
@@ -571,7 +581,7 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                                 value={isSubtask ? task.mediaType : task.product}
                                                 onChange={(e) => handleInputChange(idx, isSubtask ? 'mediaType' : 'product', e.target.value)}
                                                 placeholder={isSubtask ? "Enter subtask..." : "Enter task..."}
-                                                className={`text-[13px] ${isSubtask ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'} px-2 py-1 pr-8 w-full block`}
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                             />
                                             
                                             {!isSubtask && task.product?.trim() && (
@@ -590,7 +600,7 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                     <AutoResizeTextarea
                                         value={task.marketingChannel}
                                         onChange={(e) => handleInputChange(idx, 'marketingChannel', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
@@ -613,7 +623,7 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                     <AutoResizeTextarea
                                         value={task.mainGoal}
                                         onChange={(e) => handleInputChange(idx, 'mainGoal', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
@@ -631,7 +641,7 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                         type="date"
                                         value={task.startDate}
                                         onChange={(e) => handleInputChange(idx, 'startDate', e.target.value)}
-                                        className="w-full bg-transparent border-none focus:ring-0 text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1 [color-scheme:dark]"
+                                        className="w-full bg-transparent border-none focus:ring-0 text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1 [color-scheme:dark]"
                                     />
                                 </td>
                                 <td className="p-1">
@@ -639,14 +649,14 @@ const RnDSheet = ({ planId, initialTasks = [], initialRdMainTasks = [], isNew = 
                                         type="date"
                                         value={task.endDate}
                                         onChange={(e) => handleInputChange(idx, 'endDate', e.target.value)}
-                                        className="w-full bg-transparent border-none focus:ring-0 text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1 [color-scheme:dark]"
+                                        className="w-full bg-transparent border-none focus:ring-0 text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1 [color-scheme:dark]"
                                     />
                                 </td>
                                 <td className="p-1">
                                     <AutoResizeTextarea
                                         value={task.description}
                                         onChange={(e) => handleInputChange(idx, 'description', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1 text-center">

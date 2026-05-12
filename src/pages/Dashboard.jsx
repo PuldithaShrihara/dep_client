@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     Briefcase, DollarSign, Cpu,
     ShieldCheck, Factory, TrendingUp, Users, Calendar, ArrowUpRight,
-    X, Plus, Clock, Target, CheckCircle2, Trash2
+    X, Plus, Clock, Target, CheckCircle2, Trash2, ChevronLeft, Package
 } from 'lucide-react';
 import Header from '../components/common/Header';
 
@@ -18,7 +18,7 @@ import { API_ORIGIN } from '../config';
 import { migrateLegacyRdTasksToNested, isSubtaskComplete } from '../utils/rnd/rdTasks';
 import { getAxiosErrorMessage } from '../utils/toastHelpers';
 import { canEditPlans, isAdmin, isDepartmentHead, canEditDepartment } from '../utils/roles';
-import ThemeToggle from '../components/ThemeToggle';
+import PlanDashboard from '../components/common/PlanDashboard';
 
 const EMPTY_TASKS = [];
 
@@ -74,6 +74,8 @@ const Dashboard = () => {
     const [creatingPlan, setCreatingPlan] = useState(false);
     const [deletingPlanId, setDeletingPlanId] = useState(null);
     const [loadingPlans, setLoadingPlans] = useState(!!initialDeptId);
+    const [isEditingSheet, setIsEditingSheet] = useState(false);
+    const [activeProductFilter, setActiveProductFilter] = useState(null);
 
     const [newPlan, setNewPlan] = useState({
         month: '',
@@ -247,6 +249,8 @@ const Dashboard = () => {
             }
         } else if (!planId && activePlan) {
             setActivePlan(null);
+            setIsEditingSheet(false);
+            setActiveProductFilter(null);
         }
     }, [searchParams, plans]);
 
@@ -337,6 +341,61 @@ const Dashboard = () => {
             toast.error(getAxiosErrorMessage(err, 'Failed to delete plan'), { id: toastId });
         } finally {
             setDeletingPlanId(null);
+        }
+    };
+
+    const handleAddProduct = async (productName, productImage = '') => {
+        if (!activePlan) return;
+        
+        const toastId = toast.loading('Adding product...', { id: 'add-product' });
+        try {
+            const token = localStorage.getItem('token');
+            const newTask = {
+                product: productName,
+                productImage: productImage,
+                status: 'Planned',
+                done: false
+            };
+            
+            const updatedTasks = [...(activePlan.tasks || []), newTask];
+            
+            const res = await axios.put(`${API_ORIGIN}/api/plans/${activePlan._id}/tasks`, {
+                ...activePlan,
+                tasks: updatedTasks
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setActivePlan(res.data);
+            setPlans(plans.map(p => p._id === res.data._id ? res.data : p));
+            toast.success('Product added successfully', { id: toastId });
+        } catch (err) {
+            console.error('Error adding product:', err.response?.data || err.message);
+            toast.error(getAxiosErrorMessage(err, 'Failed to add product'), { id: toastId });
+        }
+    };
+
+    const handleDeleteProductProduct = async (productName) => {
+        if (!activePlan) return;
+
+        const toastId = toast.loading(`Deleting ${productName}...`, { id: 'delete-product' });
+        try {
+            const token = localStorage.getItem('token');
+            const updatedTasks = (activePlan.tasks || []).filter(t => t.product !== productName);
+
+            const res = await axios.put(`${API_ORIGIN}/api/plans/${activePlan._id}/tasks`, {
+                ...activePlan,
+                tasks: updatedTasks
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setActivePlan(res.data);
+            setPlans(plans.map(p => p._id === res.data._id ? res.data : p));
+            toast.success('Product deleted successfully', { id: toastId });
+        } catch (err) {
+            console.error('Error deleting product:', err.response?.data || err.message);
+            toast.error(getAxiosErrorMessage(err, 'Failed to delete product'), { id: toastId });
         }
     };
 
@@ -454,26 +513,19 @@ const Dashboard = () => {
                             ? 'max-w-none h-screen rounded-none'
                             : 'max-w-4xl max-h-[90vh] rounded-[40px]'
                         }`}>
-                        <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/5 flex justify-between items-center bg-white/40 dark:bg-white/[0.02]">
-                            <div>
-                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                                    {selectedDept ? `${selectedDept.name} Plans` : 'Loading Plans...'}
-                                </h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    {selectedDept ? 'Monthly strategic objectives and performance targets' : 'Hydrating state from secure backend'}
-                                </p>
+                        {(!activePlan && !showCreateForm) && (
+                            <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/5 flex justify-end items-center bg-white/40 dark:bg-white/[0.02]">
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchParams({})}
+                                    className="p-2 hover:bg-slate-200/80 dark:hover:bg-white/5 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
+                        )}
 
-                            <button
-                                type="button"
-                                onClick={() => setSearchParams({})}
-                                className="p-2 hover:bg-slate-200/80 dark:hover:bg-white/5 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-auto p-8">
+                        <div className={`flex-1 overflow-auto ${(activePlan || showCreateForm) ? 'p-0' : 'p-8'}`}>
                             {(!selectedDept || loadingPlans || (searchParams.get('planId') && !activePlan)) ? (
                                 <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
                                     <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4" />
@@ -481,19 +533,58 @@ const Dashboard = () => {
                                         {!selectedDept ? 'Initializing Secure Environment...' : 'Loading Plan Data...'}
                                     </p>
                                 </div>
-                            ) : ((activePlan || showCreateForm) && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name)) ? (
-                                <div className="flex-1 flex flex-col min-h-0">
+                            ) : (activePlan && !isEditingSheet && !showCreateForm) ? (
+                                <div className="relative h-full">
                                     <button
                                         type="button"
-                                        onClick={() => {
+                                        onClick={() => setSearchParams({})}
+                                        className="absolute top-8 right-8 z-50 p-2 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                    <PlanDashboard 
+                                        plan={activePlan}
+                                        onEdit={() => setIsEditingSheet(true)}
+                                        onDelete={(e) => handleDeletePlan(activePlan._id, e)}
+                                        onAddProduct={handleAddProduct}
+                                        onDeleteProduct={handleDeleteProductProduct}
+                                        onProductClick={(productName) => {
+                                            setActiveProductFilter(productName);
+                                            setIsEditingSheet(true);
+                                        }}
+                                        readOnly={!canEditDepartment(user, selectedDept?.name)}
+                                        onBack={() => {
                                             const deptId = searchParams.get('deptId');
                                             setSearchParams(deptId ? { deptId } : {});
-                                            setShowCreateForm(false);
                                         }}
-                                        className="mb-4 text-xs font-black text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 w-max"
-                                    >
-                                        ← Back to Plans
-                                    </button>
+                                    />
+                                </div>
+                            ) : ((activePlan || showCreateForm) && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name)) ? (
+                                <div className="flex-1 flex flex-col min-h-0 h-full">
+                                    <div className="px-8 pt-8 pb-4 bg-[#0a0f1d]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (showCreateForm) {
+                                                    const deptId = searchParams.get('deptId');
+                                                    setSearchParams(deptId ? { deptId } : {});
+                                                    setShowCreateForm(false);
+                                                    setActiveProductFilter(null);
+                                                } else {
+                                                    setIsEditingSheet(false);
+                                                    setActiveProductFilter(null);
+                                                }
+                                            }}
+                                            className="group flex items-center gap-3 px-5 py-2.5 bg-white/5 hover:bg-indigo-600 border border-white/10 hover:border-indigo-500 rounded-2xl transition-all duration-300"
+                                        >
+                                            <div className="w-8 h-8 rounded-xl bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition-colors">
+                                                <ChevronLeft className="text-indigo-400 group-hover:text-white" size={20} />
+                                            </div>
+                                            <span className="text-xs font-black text-slate-400 group-hover:text-white uppercase tracking-[0.2em]">
+                                                {showCreateForm ? 'Back to All Plans' : 'Back to Products'}
+                                            </span>
+                                        </button>
+                                    </div>
 
                                     {selectedDept?.name === 'Marketing' ? (
                                         <MarketingSheet
@@ -513,6 +604,7 @@ const Dashboard = () => {
                                                 setActivePlan(updatedPlan);
                                                 setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
                                             }}
+                                            filterProduct={activeProductFilter}
                                         />
                                     ) : selectedDept?.name === 'R&D' ? (
                                         <RnDSheet
@@ -533,6 +625,7 @@ const Dashboard = () => {
                                                 setActivePlan(updatedPlan);
                                                 setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
                                             }}
+                                            filterProduct={activeProductFilter}
                                         />
                                     ) : (
                                         <FinanceSheet
@@ -552,6 +645,7 @@ const Dashboard = () => {
                                                 setActivePlan(updatedPlan);
                                                 setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
                                             }}
+                                            filterProduct={activeProductFilter}
                                         />
                                     )}
                                 </div>

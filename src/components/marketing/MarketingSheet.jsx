@@ -26,7 +26,7 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
             onChange={onChange}
             placeholder={placeholder}
             rows="1"
-            className={`w-full bg-transparent border-none focus:ring-0 resize-none overflow-hidden min-h-[16px] text-[12px] leading-tight outline-none ${className}`}
+            className={`w-full bg-transparent border-none focus:ring-0 resize-none overflow-hidden min-h-[16px] text-[14px] leading-tight outline-none ${className}`}
             onInput={(e) => {
                 e.target.style.height = 'auto';
                 e.target.style.height = e.target.scrollHeight + 'px';
@@ -35,7 +35,19 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     );
 };
 
-const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId, initialTitle = '', initialMonth = '', initialYear = new Date().getFullYear(), initialTarget = '', initialDescription = '' }) => {
+const MarketingSheet = ({ 
+    planId, 
+    initialTasks = [], 
+    isNew = false, 
+    onSuccess, 
+    deptId, 
+    initialTitle = '', 
+    initialMonth = '', 
+    initialYear = new Date().getFullYear(), 
+    initialTarget = '', 
+    initialDescription = '',
+    filterProduct = null // New prop for filtering
+}) => {
     const [planData, setPlanData] = useState({
         title: initialTitle,
         month: initialMonth,
@@ -354,10 +366,10 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-white dark:bg-[#0a0f1d]">
                         <tr className="border-b border-slate-200 dark:border-white/5">
-                            <th className="px-1 py-0.5 w-12 text-[10px] font-black text-slate-500 text-center uppercase tracking-[0.2em]">No.</th>
-                            <th className="px-1 py-0.5 w-10"></th>
+                            <th className="px-1 py-1 w-12 text-[12px] font-black text-slate-500 text-center uppercase tracking-[0.2em]">No.</th>
+                            <th className="px-1 py-1 w-10"></th>
                             {columns.map(col => (
-                                <th key={col.key} className={`px-1 py-0.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ${col.width}`}>
+                                <th key={col.key} className={`px-1 py-1 text-[12px] font-black text-slate-500 uppercase tracking-[0.2em] ${col.width}`}>
                                     <div className="flex items-center gap-2">
                                         {col.icon}
                                         <span>{col.label}</span>
@@ -367,12 +379,23 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-                        {tasks.map((task, idx) => {
-                            const isPublished = (task.status || '').toLowerCase() === 'published';
-                            return (
-                                <tr key={idx} className={`group hover:bg-slate-100 dark:bg-white/[0.02] transition-colors ${isPublished ? 'bg-emerald-500/5' : ''}`}>
-                                    <td className="px-1 py-0.5 text-center">
-                                        <span className="text-[10px] font-black text-slate-600 group-hover:text-slate-600 dark:text-slate-400 transition-colors">{idx + 1}</span>
+                        {tasks
+                            .map((task, idx) => ({ ...task, originalIndex: idx }))
+                            .filter(task => {
+                                // Apply product filter if provided
+                                if (filterProduct && task.product !== filterProduct) return false;
+                                
+                                const matchesChannel = filterChannel === 'All Channels' || task.marketingChannel === filterChannel;
+                                const matchesStatus = filterStatus === 'All Status' || (task.status || '').toLowerCase() === filterStatus.toLowerCase();
+                                return matchesChannel && matchesStatus;
+                            })
+                            .map((task, displayIdx) => {
+                                const idx = task.originalIndex;
+                                const isPublished = (task.status || '').toLowerCase() === 'published';
+                                return (
+                                    <tr key={idx} className={`group hover:bg-slate-100 dark:bg-white/[0.02] transition-colors ${isPublished ? 'bg-emerald-500/5' : ''}`}>
+                                    <td className="px-1 py-1 text-center">
+                                        <span className="text-[12px] font-black text-slate-600 group-hover:text-slate-600 dark:text-slate-400 transition-colors">{idx + 1}</span>
                                     </td>
                                     <td className="px-1 py-0.5 text-center">
                                         <button
@@ -386,7 +409,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.product}
                                             onChange={(e) => handleInputChange(idx, 'product', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-900 dark:text-slate-200"
+                                            className="text-[14px] font-bold text-slate-900 dark:text-slate-200"
                                             placeholder="..."
                                         />
                                     </td>
@@ -394,7 +417,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.mediaType}
                                             onChange={(e) => handleInputChange(idx, 'mediaType', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
+                                            className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
                                             placeholder="..."
                                         />
                                     </td>
@@ -402,7 +425,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.marketingChannel}
                                             onChange={(e) => handleInputChange(idx, 'marketingChannel', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
+                                            className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
                                             placeholder="..."
                                         />
                                     </td>
@@ -410,7 +433,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.mainGoal}
                                             onChange={(e) => handleInputChange(idx, 'mainGoal', e.target.value)}
-                                            className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
+                                            className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
                                             placeholder="..."
                                         />
                                     </td>
@@ -426,7 +449,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.description}
                                             onChange={(e) => handleInputChange(idx, 'description', e.target.value)}
-                                            className="text-[12px] font-medium text-slate-600 dark:text-slate-400"
+                                            className="text-[14px] font-medium text-slate-600 dark:text-slate-400"
                                             placeholder="..."
                                         />
                                     </td>
@@ -434,7 +457,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                         <AutoResizeTextarea
                                             value={task.outcome}
                                             onChange={(e) => handleInputChange(idx, 'outcome', e.target.value)}
-                                            className="text-[12px] font-medium text-slate-600 dark:text-slate-400"
+                                            className="text-[14px] font-medium text-slate-600 dark:text-slate-400"
                                             placeholder="..."
                                         />
                                     </td>
@@ -446,7 +469,7 @@ const MarketingSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, d
                                             <AutoResizeTextarea
                                                 value={task.owner}
                                                 onChange={(e) => handleInputChange(idx, 'owner', e.target.value)}
-                                                className="text-[12px] font-bold text-slate-700 dark:text-slate-300"
+                                                className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
                                                 placeholder="..."
                                             />
                                         </div>

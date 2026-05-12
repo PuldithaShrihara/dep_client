@@ -33,7 +33,19 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     );
 };
 
-const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, deptId, initialTitle = '', initialMonth = '', initialYear = new Date().getFullYear(), initialTarget = '', initialDescription = '' }) => {
+const FinanceSheet = ({ 
+    planId, 
+    initialTasks = [], 
+    isNew = false, 
+    onSuccess, 
+    deptId, 
+    initialTitle = '', 
+    initialMonth = '', 
+    initialYear = new Date().getFullYear(), 
+    initialTarget = '', 
+    initialDescription = '',
+    filterProduct = null
+}) => {
     const [planData, setPlanData] = useState({
         title: initialTitle,
         month: initialMonth,
@@ -291,10 +303,10 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#059669]">
                         <tr className="divide-x divide-white/10">
-                            <th className="p-2 w-12 bg-[#047857] text-[11px] font-bold text-slate-900 dark:text-white text-center uppercase tracking-tight">No.</th>
+                            <th className="p-2 w-12 bg-[#047857] text-[12px] font-black text-slate-900 dark:text-white text-center uppercase tracking-tight">No.</th>
                             <th className="p-2 w-10 bg-[#047857]"></th>
                             {columns.map(col => (
-                                <th key={col.key} className={`p-2 text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-tight ${col.width}`}>
+                                <th key={col.key} className={`p-2 text-[12px] font-black text-slate-900 dark:text-white uppercase tracking-tight ${col.width}`}>
                                     <div className="flex items-center gap-2">
                                         {col.icon}
                                         <span>{col.label}</span>
@@ -304,11 +316,18 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/10">
-                        {tasks.map((task, idx) => {
+                        {tasks
+                            .map((task, idx) => ({ ...task, originalIndex: idx }))
+                            .filter(task => {
+                                if (filterProduct && task.product !== filterProduct) return false;
+                                return true;
+                            })
+                            .map((task, displayIdx) => {
+                                const idx = task.originalIndex;
                             const isCompleted = (task.status || '').toLowerCase() === 'completed';
                             return (
                                 <tr key={idx} className={`group hover:bg-emerald-500/5 transition-colors divide-x divide-slate-200/10 ${isCompleted ? 'bg-emerald-500/20' : ''}`}>
-                                    <td className={`p-1 text-center text-[11px] font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'}`}>
+                                    <td className={`p-1 text-center text-[12px] font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'}`}>
                                         {idx + 1}
                                     </td>
                                     <td className={`p-1 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : 'bg-slate-900/40'}`}>
@@ -323,7 +342,7 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                                     <AutoResizeTextarea
                                         value={task.product}
                                         onChange={(e) => handleInputChange(idx, 'product', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
@@ -346,35 +365,35 @@ const FinanceSheet = ({ planId, initialTasks = [], isNew = false, onSuccess, dep
                                     <AutoResizeTextarea
                                         value={task.mediaType}
                                         onChange={(e) => handleInputChange(idx, 'mediaType', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
                                     <AutoResizeTextarea
                                         value={task.marketingChannel}
                                         onChange={(e) => handleInputChange(idx, 'marketingChannel', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
                                     <AutoResizeTextarea
                                         value={task.mainGoal}
                                         onChange={(e) => handleInputChange(idx, 'mainGoal', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
                                     <AutoResizeTextarea
                                         value={task.owner}
                                         onChange={(e) => handleInputChange(idx, 'owner', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1">
                                     <AutoResizeTextarea
                                         value={task.priority}
                                         onChange={(e) => handleInputChange(idx, 'priority', e.target.value)}
-                                        className="text-[13px] text-slate-900 dark:text-slate-200 px-2 py-1"
+                                        className="text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1"
                                     />
                                 </td>
                                 <td className="p-1 text-center">
