@@ -19,28 +19,44 @@ const PlanDashboard = ({
 
     // Group tasks by product to show in the products tab
     const products = useMemo(() => {
-        if (!plan || !plan.tasks) return [];
+        if (!plan) return [];
         
         const productMap = {};
         
-        plan.tasks.forEach(task => {
-            const productName = task.product || 'General/Miscellaneous';
-            if (!productMap[productName]) {
-                productMap[productName] = {
-                    name: productName,
-                    category: task.mediaType || 'Marketing',
+        // 1. Initialize from dedicated products array (if it exists)
+        if (plan.products && plan.products.length > 0) {
+            plan.products.forEach(p => {
+                productMap[p.name] = {
+                    name: p.name,
+                    category: 'Campaign',
                     totalTasks: 0,
                     completedTasks: 0,
-                    image: task.productImage || null
+                    image: p.image || null
                 };
-            }
-            
-            productMap[productName].totalTasks += 1;
-            const status = (task.status || '').toLowerCase();
-            if (task.done || status === 'completed' || status === 'published') {
-                productMap[productName].completedTasks += 1;
-            }
-        });
+            });
+        }
+        
+        // 2. Merge in tasks and find any additional products from legacy data
+        if (plan.tasks) {
+            plan.tasks.forEach(task => {
+                const productName = task.product || 'General/Miscellaneous';
+                if (!productMap[productName]) {
+                    productMap[productName] = {
+                        name: productName,
+                        category: task.mediaType || 'Marketing',
+                        totalTasks: 0,
+                        completedTasks: 0,
+                        image: task.productImage || null
+                    };
+                }
+                
+                productMap[productName].totalTasks += 1;
+                const status = (task.status || '').toLowerCase();
+                if (task.done || status === 'completed' || status === 'published') {
+                    productMap[productName].completedTasks += 1;
+                }
+            });
+        }
 
         return Object.values(productMap).map(p => ({
             ...p,

@@ -220,7 +220,7 @@ const MarketingSheet = ({
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
             <Header 
                 title="Marketing Department" 
-                subtitle={`${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
+                subtitle={filterProduct || `${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
                 icon={TrendingUp}
                 iconBg="bg-indigo-600"
                 showUsersLink={false}

@@ -375,7 +375,7 @@ const RnDSheet = ({
         <div className="flex flex-col h-full bg-[#020617]/50 rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5">
             <Header 
                 title="R&D Department" 
-                subtitle={`${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
+                subtitle={filterProduct || `${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
                 icon={Cpu}
                 iconBg="bg-amber-600"
                 showUsersLink={false}

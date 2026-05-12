@@ -344,24 +344,16 @@ const Dashboard = () => {
         }
     };
 
-    const handleAddProduct = async (productName, productImage = '') => {
+    const handleAddProduct = async (productName, productImage) => {
         if (!activePlan) return;
-        
+
         const toastId = toast.loading('Adding product...', { id: 'add-product' });
         try {
             const token = localStorage.getItem('token');
-            const newTask = {
-                product: productName,
-                productImage: productImage,
-                status: 'Planned',
-                done: false
-            };
-            
-            const updatedTasks = [...(activePlan.tasks || []), newTask];
-            
-            const res = await axios.put(`${API_ORIGIN}/api/plans/${activePlan._id}/tasks`, {
-                ...activePlan,
-                tasks: updatedTasks
+            const res = await axios.post(`${API_ORIGIN}/api/plans/${activePlan._id}/products`, {
+                name: productName,
+                image: productImage,
+                description: 'New product campaign'
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -381,12 +373,7 @@ const Dashboard = () => {
         const toastId = toast.loading(`Deleting ${productName}...`, { id: 'delete-product' });
         try {
             const token = localStorage.getItem('token');
-            const updatedTasks = (activePlan.tasks || []).filter(t => t.product !== productName);
-
-            const res = await axios.put(`${API_ORIGIN}/api/plans/${activePlan._id}/tasks`, {
-                ...activePlan,
-                tasks: updatedTasks
-            }, {
+            const res = await axios.delete(`${API_ORIGIN}/api/plans/${activePlan._id}/products/${productName}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
