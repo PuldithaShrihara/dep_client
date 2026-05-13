@@ -145,7 +145,7 @@ const MarketingSheet = ({
 
     const addRow = () => {
         setTasks([...tasks, {
-            product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+            product: filterProduct || '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
             startDate: '', endDate: '', assets: '', notes: '', completedBy: '',
             completedTime: '', reportTo: ''
@@ -218,85 +218,90 @@ const MarketingSheet = ({
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
-            <Header 
-                title="Marketing Department" 
-                subtitle={filterProduct || `${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
-                icon={TrendingUp}
-                iconBg="bg-indigo-600"
-                showUsersLink={false}
-            />
+            {!filterProduct && (
+                <Header 
+                    title="Marketing Department" 
+                    subtitle={filterProduct || `${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
+                    icon={TrendingUp}
+                    iconBg="bg-indigo-600"
+                    showUsersLink={false}
+                />
+            )}
             {/* Header Section */}
-            <div className="px-4 pt-4 pb-2 flex flex-col gap-4">
-
-                {/* Form Inputs and Success Rate */}
-                <div className="flex items-center gap-6">
-                    <div className="flex-1 grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Strategy Title</label>
-                            <div className="relative group">
+            {!filterProduct && (
+                <div className="px-4 pt-4 pb-2 flex flex-col gap-4">
+                    {/* Form Inputs and Success Rate */}
+                    <div className="flex items-center gap-6">
+                        <div className="flex-1 grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Strategy Title</label>
+                                <div className="relative group">
+                                    <input
+                                        className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                                        value={planData.title}
+                                        onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Month</label>
+                                <select
+                                    className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none"
+                                    value={planData.month}
+                                    onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
+                                >
+                                    <option value="">Select...</option>
+                                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Year</label>
                                 <input
+                                    type="number"
                                     className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
-                                    value={planData.title}
-                                    onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
+                                    value={planData.year}
+                                    onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Month</label>
-                            <select
-                                className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none"
-                                value={planData.month}
-                                onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
-                            >
-                                <option value="">Select...</option>
-                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
-                                    <option key={m} value={m}>{m}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Year</label>
-                            <input
-                                type="number"
-                                className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
-                                value={planData.year}
-                                onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="w-64 space-y-2">
-                        <div className="flex justify-between items-end mb-1">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Success Rate</label>
-                            <span className="text-xs font-black text-slate-600 dark:text-slate-400">{stats.rate}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-50 dark:bg-[#1a1f2e] rounded-full overflow-hidden border border-slate-200 dark:border-white/5">
-                            <div 
-                                className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000"
-                                style={{ width: `${stats.rate}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stat Cards */}
-                <div className="grid grid-cols-4 gap-4">
-                    {[
-                        { label: 'Total Tasks', value: stats.total, sub: 'this month', border: 'border-slate-200 dark:border-white/5' },
-                        { label: 'Completed', value: stats.completed, sub: 'tasks done', border: 'border-emerald-500/30' },
-                        { label: 'In Progress', value: stats.inProgress, sub: 'remaining', border: 'border-amber-500/30' },
-                        { label: 'Completion', value: `${stats.rate}%`, sub: 'success rate', border: 'border-indigo-500/30 text-slate-900 dark:text-white' }
-                    ].map((s, i) => (
-                        <div key={i} className={`bg-slate-50 dark:bg-[#1a1f2e]/50 border ${s.border} p-4 rounded-2xl`}>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{s.label}</p>
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white">{s.value}</h3>
-                                <span className="text-[10px] font-bold text-slate-500">{s.sub}</span>
+                        <div className="w-64 space-y-2">
+                            <div className="flex justify-between items-end mb-1">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Success Rate</label>
+                                <span className="text-xs font-black text-slate-600 dark:text-slate-400">{stats.rate}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-50 dark:bg-[#1a1f2e] rounded-full overflow-hidden border border-slate-200 dark:border-white/5">
+                                <div 
+                                    className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000"
+                                    style={{ width: `${stats.rate}%` }}
+                                />
                             </div>
                         </div>
-                    ))}
-                </div>
+                    </div>
 
+                    {/* Stat Cards */}
+                    <div className="grid grid-cols-4 gap-4">
+                        {[
+                            { label: 'Total Tasks', value: stats.total, sub: 'this month', border: 'border-slate-200 dark:border-white/5' },
+                            { label: 'Completed', value: stats.completed, sub: 'tasks done', border: 'border-emerald-500/30' },
+                            { label: 'In Progress', value: stats.inProgress, sub: 'remaining', border: 'border-amber-500/30' },
+                            { label: 'Completion', value: `${stats.rate}%`, sub: 'success rate', border: 'border-indigo-500/30 text-slate-900 dark:text-white' }
+                        ].map((s, i) => (
+                            <div key={i} className={`bg-slate-50 dark:bg-[#1a1f2e]/50 border ${s.border} p-4 rounded-2xl`}>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{s.label}</p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">{s.value}</h3>
+                                    <span className="text-[10px] font-bold text-slate-500">{s.sub}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="px-4 pt-2 pb-2">
                 {/* Tabs and Filters */}
                 <div className="flex items-center justify-between mt-4 border-b border-slate-200 dark:border-white/5 pb-2">
                     <div className="flex gap-8">
@@ -356,7 +361,7 @@ const MarketingSheet = ({
                             onClick={addRow}
                             className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-[#1a1f2e] hover:bg-slate-100 dark:bg-[#252a3a] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 rounded-lg transition-all font-bold text-xs"
                         >
-                            <Plus size={12} /> Add Row
+                            <Plus size={12} /> {filterProduct ? 'Add Campaign' : 'Add Row'}
                         </button>
                     </div>
                 </div>
@@ -382,8 +387,8 @@ const MarketingSheet = ({
                         {tasks
                             .map((task, idx) => ({ ...task, originalIndex: idx }))
                             .filter(task => {
-                                // Apply product filter if provided
-                                if (filterProduct && task.product !== filterProduct) return false;
+                                // Apply product filter if provided (case-insensitive)
+                                if (filterProduct && (task.product || '').toLowerCase() !== filterProduct.toLowerCase()) return false;
                                 
                                 const matchesChannel = filterChannel === 'All Channels' || task.marketingChannel === filterChannel;
                                 const matchesStatus = filterStatus === 'All Status' || (task.status || '').toLowerCase() === filterStatus.toLowerCase();

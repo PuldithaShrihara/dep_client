@@ -287,7 +287,7 @@ const RnDSheet = ({
 
     const addRow = () => {
         setTasks([...tasks, {
-            product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+            product: filterProduct || '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
             completedTime: '', reportTo: ''
@@ -373,13 +373,15 @@ const RnDSheet = ({
 
     return (
         <div className="flex flex-col h-full bg-[#020617]/50 rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5">
-            <Header 
-                title="R&D Department" 
-                subtitle={filterProduct || `${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
-                icon={Cpu}
-                iconBg="bg-amber-600"
-                showUsersLink={false}
-            />
+            {!filterProduct && (
+                <Header 
+                    title="R&D Department" 
+                    subtitle={filterProduct || `${planData.month} ${planData.year} - ${planData.title || 'Plan Execution'}`}
+                    icon={Cpu}
+                    iconBg="bg-amber-600"
+                    showUsersLink={false}
+                />
+            )}
             
             <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/[0.02] flex items-center justify-between">
                 <div className="flex gap-3">
@@ -387,7 +389,7 @@ const RnDSheet = ({
                         onClick={addRow}
                         className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-white/5 hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white rounded-xl transition-all text-xs font-bold"
                     >
-                        <Plus size={14} /> Add Row
+                        <Plus size={14} /> {filterProduct ? 'Add Campaign' : 'Add Row'}
                     </button>
                     <button
                         type="button"
@@ -400,70 +402,72 @@ const RnDSheet = ({
                 </div>
             </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 entrance-animation">
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Plan Title</label>
-                        <input
-                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50 transition-all font-medium"
-                            placeholder="e.g. Next-Gen Product R&D"
-                            value={planData.title}
-                            onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Month</label>
-                        <select
-                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50 transition-all font-medium"
-                            value={planData.month}
-                            onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
-                        >
-                            <option value="" className="bg-slate-900">Select...</option>
-                            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Year</label>
-                        <input
-                            type="number"
-                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50 transition-all font-medium"
-                            value={planData.year}
-                            onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Success Percentage</label>
-                        <div className="w-full bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-sm font-black text-amber-400 flex items-center justify-between">
-                            <span>{(() => {
-                                const activeMainTasks = tasks.filter(t => {
-                                    const isSubtask = t._isSubtask || (t.product === '' && t.mediaType !== '');
-                                    return !isSubtask && t.product?.trim();
-                                });
-                                const total = activeMainTasks.length;
-                                const done = activeMainTasks.filter(t => {
-                                    const status = (t.status || '').toLowerCase();
-                                    return t.done || status === 'completed' || status === 'published';
-                                }).length;
-                                return total > 0 ? Math.round((done / total) * 100) : 0;
-                            })()}%</span>
-                            <div className="flex-1 ml-4 h-1.5 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-amber-500 transition-all duration-1000" 
-                                    style={{ width: `${(() => {
-                                        const activeTasks = tasks.filter(t => t.product?.trim() || t.mediaType?.trim());
-                                        const total = activeTasks.length;
-                                        const done = activeTasks.filter(t => {
-                                            const status = (t.status || '').toLowerCase();
-                                            return t.done || status === 'completed' || status === 'published';
-                                        }).length;
-                                        return total > 0 ? Math.round((done / total) * 100) : 0;
-                                    })()}%` }}
-                                />
+                {!filterProduct && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 entrance-animation">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Plan Title</label>
+                            <input
+                                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50 transition-all font-medium"
+                                placeholder="e.g. Next-Gen Product R&D"
+                                value={planData.title}
+                                onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Month</label>
+                            <select
+                                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50 transition-all font-medium"
+                                value={planData.month}
+                                onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
+                            >
+                                <option value="" className="bg-slate-900">Select...</option>
+                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Year</label>
+                            <input
+                                type="number"
+                                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-amber-500/50 transition-all font-medium"
+                                value={planData.year}
+                                onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Success Percentage</label>
+                            <div className="w-full bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-sm font-black text-amber-400 flex items-center justify-between">
+                                <span>{(() => {
+                                    const activeMainTasks = tasks.filter(t => {
+                                        const isSubtask = t._isSubtask || (t.product === '' && t.mediaType !== '');
+                                        return !isSubtask && t.product?.trim();
+                                    });
+                                    const total = activeMainTasks.length;
+                                    const done = activeMainTasks.filter(t => {
+                                        const status = (t.status || '').toLowerCase();
+                                        return t.done || status === 'completed' || status === 'published';
+                                    }).length;
+                                    return total > 0 ? Math.round((done / total) * 100) : 0;
+                                })()}%</span>
+                                <div className="flex-1 ml-4 h-1.5 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-amber-500 transition-all duration-1000" 
+                                        style={{ width: `${(() => {
+                                            const activeTasks = tasks.filter(t => t.product?.trim() || t.mediaType?.trim());
+                                            const total = activeTasks.length;
+                                            const done = activeTasks.filter(t => {
+                                                const status = (t.status || '').toLowerCase();
+                                                return t.done || status === 'completed' || status === 'published';
+                                            }).length;
+                                            return total > 0 ? Math.round((done / total) * 100) : 0;
+                                        })()}%` }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
             
             <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50/5">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
@@ -490,13 +494,16 @@ const RnDSheet = ({
                             tasks.forEach((task, idx) => {
                                 const isSubtask = task._isSubtask || (task.product === '' && task.mediaType !== '');
                                 
-                                // Apply product filter
+                                // Apply product filter (case-insensitive)
                                 if (filterProduct) {
+                                    const fpLower = filterProduct.toLowerCase();
                                     // If it's a main task, check if it matches
-                                    if (!isSubtask && task.product !== filterProduct) return;
+                                    if (!isSubtask && (task.product || '').toLowerCase() !== fpLower) return;
                                     // If it's a subtask, it belongs to the previous main task
-                                    // So we only keep it if the current main task being processed matches
-                                    if (isSubtask && tasks.slice(0, idx).reverse().find(t => t.product && !t._isSubtask)?.product !== filterProduct) return;
+                                    if (isSubtask) {
+                                        const parentTask = tasks.slice(0, idx).reverse().find(t => t.product && !t._isSubtask);
+                                        if ((parentTask?.product || '').toLowerCase() !== fpLower) return;
+                                    }
                                 }
                                 
                                 let displayNumber = '';

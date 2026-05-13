@@ -223,8 +223,14 @@ const PlanDashboard = ({
                                 </div>
 
                                 <div className="flex items-center gap-4">
-                                    <button className="px-5 py-2 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white border border-indigo-600/30 rounded-xl font-black text-[12px] uppercase tracking-widest transition-all flex items-center gap-2">
-                                        <Plus size={14} /> Create Campaign
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onProductClick && onProductClick(product.name);
+                                        }}
+                                        className="px-5 py-2 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white border border-indigo-600/30 rounded-xl font-black text-[12px] uppercase tracking-widest transition-all flex items-center gap-2"
+                                    >
+                                        <Plus size={14} /> Campaigns
                                     </button>
                                     {!readOnly && (
                                         <button 
