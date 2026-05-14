@@ -115,8 +115,11 @@ const MarketingSheet = ({
             insertIndex++;
         }
 
+        const parentTask = tasks[index];
         const newRow = {
-            product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+            product: parentTask.product || '', 
+            assets: parentTask.assets || '',
+            mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
             completedTime: '', reportTo: '', _isSubtask: true
@@ -135,7 +138,8 @@ const MarketingSheet = ({
         const validTasks = tasks.filter(t => 
             (t.product && t.product.trim()) || 
             (t.mainGoal && t.mainGoal.trim()) || 
-            (t.description && t.description.trim())
+            (t.description && t.description.trim()) ||
+            t._isSubtask
         );
         const total = validTasks.length;
         const completed = validTasks.filter(t => {
@@ -150,13 +154,16 @@ const MarketingSheet = ({
 
     // Statistics for specifically filtered product (Campaign Page)
     const filteredStats = useMemo(() => {
-        const filteredTasks = tasks.filter(t => 
-            filterProduct ? (t.product || '').toLowerCase() === filterProduct.toLowerCase() : true
-        );
+        const filteredTasks = tasks.filter(t => {
+            if (!filterProduct) return true;
+            const fpLower = filterProduct.toLowerCase();
+            return (t.assets === filterProduct) || (t.product && t.product.toLowerCase() === fpLower);
+        });
         const validTasks = filteredTasks.filter(t => 
             (t.product && t.product.trim()) || 
             (t.mainGoal && t.mainGoal.trim()) || 
-            (t.description && t.description.trim())
+            (t.description && t.description.trim()) ||
+            (t.mediaType && t.mediaType.trim())
         );
         const total = validTasks.length;
         const completed = validTasks.filter(t => {
@@ -173,7 +180,7 @@ const MarketingSheet = ({
     const activeProductImage = useMemo(() => {
         if (!filterProduct) return null;
         const taskWithImage = tasks.find(t => 
-            (t.product || '').toLowerCase() === filterProduct.toLowerCase() && t.productImage
+            ((t.assets === filterProduct) || (t.product && t.product.toLowerCase() === filterProduct.toLowerCase())) && t.productImage
         );
         
         if (taskWithImage?.productImage) return taskWithImage.productImage;
@@ -217,9 +224,11 @@ const MarketingSheet = ({
 
     const addRow = () => {
         setTasks([...tasks, {
-            product: filterProduct || '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+            product: '', 
+            assets: filterProduct || '', // Link to parent product
+            mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
-            startDate: '', endDate: '', assets: '', notes: '', completedBy: '',
+            startDate: '', endDate: '', notes: '', completedBy: '',
             completedTime: '', reportTo: ''
         }]);
     };
@@ -263,7 +272,13 @@ const MarketingSheet = ({
             if (isNew) {
                 const res = await axios.post(`${API_ORIGIN}/api/plans`, {
                     ...planData,
-                    tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim()),
+                    tasks: tasks.filter(t => 
+                        t.product?.trim() || 
+                        t.description?.trim() || 
+                        t.mainGoal?.trim() || 
+                        t.mediaType?.trim() ||
+                        t._isSubtask
+                    ),
                     department: deptId
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -272,7 +287,13 @@ const MarketingSheet = ({
                 if (onSuccess) onSuccess(res.data);
             } else {
                 const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
-                    tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim()),
+                    tasks: tasks.filter(t => 
+                        t.product?.trim() || 
+                        t.description?.trim() || 
+                        t.mainGoal?.trim() || 
+                        t.mediaType?.trim() ||
+                        t._isSubtask
+                    ),
                     ...planData
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -535,10 +556,14 @@ const MarketingSheet = ({
                                 // Apply product filter
                                 if (filterProduct) {
                                     const fpLower = filterProduct.toLowerCase();
-                                    if (!isSubtask && (task.product || '').toLowerCase() !== fpLower) return;
+                                    const isLinkedToProduct = (task.assets === filterProduct) || (task.product && task.product.toLowerCase() === fpLower);
+                                    
+                                    if (!isSubtask && !isLinkedToProduct) return;
+                                    
                                     if (isSubtask) {
-                                        const parentTask = tasks.slice(0, idx).reverse().find(t => t.product && !t._isSubtask);
-                                        if ((parentTask?.product || '').toLowerCase() !== fpLower) return;
+                                        const parentTask = tasks.slice(0, idx).reverse().find(t => (t.product || t.mainGoal || t.mediaType) && !t._isSubtask);
+                                        const parentIsLinked = parentTask && ((parentTask.assets === filterProduct) || (parentTask.product && parentTask.product.toLowerCase() === fpLower));
+                                        if (!parentIsLinked) return;
                                     }
                                 }
                                 

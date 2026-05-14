@@ -371,7 +371,7 @@ const Dashboard = () => {
         }
     };
 
-    const handleDeleteProductProduct = async (productName) => {
+    const handleDeleteProduct = async (productName) => {
         if (!activePlan) return;
 
         const toastId = toast.loading(`Deleting ${productName}...`, { id: 'delete-product' });
@@ -540,7 +540,7 @@ const Dashboard = () => {
                                         onEdit={() => setIsEditingSheet(true)}
                                         onDelete={(e) => handleDeletePlan(activePlan._id, e)}
                                         onAddProduct={handleAddProduct}
-                                        onDeleteProduct={handleDeleteProductProduct}
+                                        onDeleteProduct={handleDeleteProduct}
                                         onProductClick={(productName) => {
                                             setActiveProductFilter(productName);
                                             setIsEditingSheet(true);

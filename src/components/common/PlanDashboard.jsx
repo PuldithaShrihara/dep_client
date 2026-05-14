@@ -39,7 +39,9 @@ const PlanDashboard = ({
         // 2. Merge in tasks and find any additional products from legacy data
         if (plan.tasks) {
             plan.tasks.forEach(task => {
-                const productName = task.product || 'General/Miscellaneous';
+                // Check 'assets' first (new linkage) then 'product' (legacy/standard)
+                const productName = task.assets || task.product || 'General/Miscellaneous';
+                
                 if (!productMap[productName]) {
                     productMap[productName] = {
                         name: productName,
@@ -87,9 +89,9 @@ const PlanDashboard = ({
                                 <X size={24} />
                             </button>
                         </div>
-                        <form onSubmit={handleAddSubmit} className="space-y-5">
+                        <form onSubmit={handleAddSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Product Name</label>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Product Name</label>
                                 <input 
                                     autoFocus
                                     type="text" 
@@ -100,19 +102,51 @@ const PlanDashboard = ({
                                     required
                                 />
                             </div>
+                            
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Image URL (Optional)</label>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Select Product Image</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {[
+                                        '/skincare_product_1_1778561641568.png',
+                                        '/skincare_product_2_1778561675994.png',
+                                        '/skincare_product_3_1778561699216.png',
+                                        '/skincare_product_1_1778561641568.png', // Fallbacks/More options
+                                        '/skincare_product_2_1778561675994.png',
+                                        '/skincare_product_3_1778561699216.png'
+                                    ].map((img, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setNewProductData({...newProductData, image: img})}
+                                            className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                                                newProductData.image === img 
+                                                ? 'border-indigo-500 scale-95 shadow-lg shadow-indigo-500/20' 
+                                                : 'border-white/10 hover:border-white/30'
+                                            }`}
+                                        >
+                                            <img src={img} alt="Option" className="w-full h-full object-cover" />
+                                            {newProductData.image === img && (
+                                                <div className="absolute inset-0 bg-indigo-600/20 flex items-center justify-center">
+                                                    <div className="bg-indigo-600 rounded-full p-1 shadow-lg">
+                                                        <CheckCircle size={14} className="text-white" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                                 <input 
                                     type="text" 
                                     value={newProductData.image}
                                     onChange={(e) => setNewProductData({...newProductData, image: e.target.value})}
-                                    placeholder="https://example.com/image.jpg"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-all font-bold"
+                                    placeholder="Or paste custom image path (.png/.jpg)"
+                                    className="w-full mt-4 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] text-slate-400 focus:outline-none focus:border-indigo-500 transition-all font-bold"
                                 />
                             </div>
+
                             <button 
                                 type="submit"
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 mt-4"
+                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 mt-2"
                             >
                                 Create Product
                             </button>
