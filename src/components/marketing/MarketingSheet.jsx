@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
-    FileText, Clock, ChevronDown, CheckSquare, Cloud, Flag, File,
-    MoreHorizontal, Download, Layout, Search
+    FileText, Clock, ChevronDown, ChevronRight, CheckSquare, Cloud, Flag, File,
+    MoreHorizontal, Download, Layout, Search, CornerDownRight, Target
 } from 'lucide-react';
 import { API_ORIGIN } from '../../config';
 import Header from '../common/Header';
@@ -97,6 +97,38 @@ const MarketingSheet = ({
     }).map(row => ({ ...row })));
 
     const [saving, setSaving] = useState(false);
+    const [collapsedMains, setCollapsedMains] = useState({});
+
+    const toggleCollapse = (id) => {
+        setCollapsedMains(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
+
+    const handleAddSubtask = (idx) => {
+        let insertIndex = idx + 1;
+        while (insertIndex < tasks.length) {
+            if (tasks[insertIndex].product?.trim() && !tasks[insertIndex]._isSubtask) {
+                break;
+            }
+            insertIndex++;
+        }
+
+        const newRow = {
+            product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+            description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
+            startDate: '', endDate: '', notes: '', completedBy: '',
+            completedTime: '', reportTo: '', _isSubtask: true
+        };
+
+        const newTasks = [
+            ...tasks.slice(0, insertIndex),
+            newRow,
+            ...tasks.slice(insertIndex)
+        ];
+        setTasks(newTasks);
+    };
 
     // Statistics Calculation
     const stats = useMemo(() => {
@@ -137,24 +169,43 @@ const MarketingSheet = ({
         return { total, completed, inProgress, rate };
     }, [tasks, filterProduct]);
 
-    const columns = [
-        { key: 'product', label: 'Product', icon: <ChevronDown size={14} />, width: 'w-40' },
+    // Find the product image from the tasks or fallback
+    const activeProductImage = useMemo(() => {
+        if (!filterProduct) return null;
+        const taskWithImage = tasks.find(t => 
+            (t.product || '').toLowerCase() === filterProduct.toLowerCase() && t.productImage
+        );
+        
+        if (taskWithImage?.productImage) return taskWithImage.productImage;
+        
+        // Fallback to standard assets if not found (simulating PlanDashboard logic)
+        const fallbacks = [
+            '/skincare_product_1_1778561641568.png',
+            '/skincare_product_2_1778561675994.png',
+            '/skincare_product_3_1778561699216.png'
+        ];
+        const index = filterProduct.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % fallbacks.length;
+        return fallbacks[index];
+    }, [tasks, filterProduct]);
+
+    const columns = useMemo(() => [
+        { key: 'product', label: filterProduct ? 'Campaign Objective / Task' : 'Product', icon: <ChevronDown size={14} />, width: filterProduct ? 'w-80' : 'w-40' },
         { key: 'mediaType', label: 'Media Type', icon: <ChevronDown size={14} />, width: 'w-24' },
         { key: 'marketingChannel', label: 'Marketing Channel', icon: <ChevronDown size={14} />, width: 'w-40' },
         { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-56' },
         { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-12' },
-        { key: 'description', label: 'Task Description', icon: <ChevronDown size={14} />, width: 'w-72' },
-        { key: 'outcome', label: 'Expected Outcome', icon: <ChevronDown size={14} />, width: 'w-56' },
+        { key: 'description', label: 'Description', icon: <FileText size={14} />, width: 'w-64' },
+        { key: 'outcome', label: 'Outcome', icon: <Target size={14} />, width: 'w-56' },
         { key: 'owner', label: 'Owner', icon: <User size={14} />, width: 'w-40' },
-        { key: 'status', label: 'Status', icon: <Cloud size={14} />, width: 'w-32' },
-        { key: 'priority', label: 'Priority', icon: <Flag size={14} />, width: 'w-28' },
-        { key: 'startDate', label: 'Start date', icon: <Calendar size={14} />, width: 'w-36' },
-        { key: 'endDate', label: 'End date', icon: <Calendar size={14} />, width: 'w-36' },
-        { key: 'notes', label: 'Notes', icon: <FileText size={14} />, width: 'w-56' },
+        { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-32' },
+        { key: 'priority', label: 'Priority', icon: <MoreHorizontal size={14} />, width: 'w-28' },
+        { key: 'startDate', label: 'Start Date', icon: <Calendar size={14} />, width: 'w-36' },
+        { key: 'endDate', label: 'End Date', icon: <Calendar size={14} />, width: 'w-36' },
+        { key: 'notes', label: 'Notes', icon: <FileText size={14} />, width: 'w-64' },
         { key: 'completedBy', label: 'Completed By', icon: <User size={14} />, width: 'w-40' },
-        { key: 'completedTime', label: 'Completed Time', icon: <Clock size={14} />, width: 'w-40' },
-        { key: 'reportTo', label: 'Report to', icon: <User size={14} />, width: 'w-40' },
-    ];
+        { key: 'completedTime', label: 'Completion Time', icon: <Clock size={14} />, width: 'w-40' },
+        { key: 'reportTo', label: 'Report To', icon: <User size={14} />, width: 'w-40' }
+    ], [filterProduct]);
 
     const handleInputChange = (index, key, value) => {
         setTasks(prev => {
@@ -248,10 +299,8 @@ const MarketingSheet = ({
                     showUsersLink={false}
                 />
             )}
-            {/* Header Section */}
             {!filterProduct && (
                 <div className="px-4 pt-4 pb-2 flex flex-col gap-4">
-                    {/* Form Inputs and Success Rate */}
                     <div className="flex items-center gap-6">
                         <div className="flex-1 grid grid-cols-3 gap-4">
                             <div className="space-y-2">
@@ -302,7 +351,6 @@ const MarketingSheet = ({
                         </div>
                     </div>
 
-                    {/* Stat Cards */}
                     <div className="grid grid-cols-4 gap-4">
                         {[
                             { label: 'Total Tasks', value: stats.total, sub: 'this month', border: 'border-slate-200 dark:border-white/5' },
@@ -322,60 +370,68 @@ const MarketingSheet = ({
                 </div>
             )}
 
-            {/* Analysis Bar for Filtered View (Campaign Page) */}
             {filterProduct && (
                 <div className="mx-4 mt-6 p-6 bg-slate-900 border border-white/10 rounded-[28px] shadow-2xl animate-in fade-in slide-in-from-top duration-700">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-                        {/* Campaign Identity */}
                         <div className="flex items-center gap-5 min-w-0">
-                            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shrink-0 shadow-inner text-indigo-400">
-                                <TrendingUp size={32} />
+                            <div className="w-20 h-20 rounded-2xl bg-white/5 overflow-hidden border border-white/10 shrink-0 shadow-2xl group/img relative">
+                                {activeProductImage ? (
+                                    <img 
+                                        src={activeProductImage} 
+                                        alt={filterProduct}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                ) : null}
+                                <div className={`w-full h-full flex items-center justify-center bg-indigo-500/10 ${activeProductImage ? 'hidden' : 'flex'}`}>
+                                    <TrendingUp className="text-indigo-400" size={32} />
+                                </div>
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 text-indigo-400 font-black text-[10px] uppercase tracking-[0.25em] mb-1">
                                     <span>Campaign Analysis</span>
                                     <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20 text-[9px]">Real-time Tracking</span>
                                 </div>
-                                <h2 className="text-2xl font-black text-white tracking-tighter uppercase truncate max-w-md">
+                                <h2 className="text-3xl font-black text-white tracking-tighter uppercase truncate max-w-md">
                                     {filterProduct}
                                 </h2>
                             </div>
                         </div>
 
-                        {/* Progress Visualization */}
-                        <div className="flex-1 w-full max-w-md px-10 border-x border-white/5">
+                        <div className="flex items-center gap-10 bg-white/5 px-8 py-4 rounded-2xl border border-x border-white/5 mx-6">
+                            <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total</p>
+                                <h3 className="text-3xl font-black text-white leading-none">{filteredStats.total}</h3>
+                            </div>
+                            <div className="w-px h-10 bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Done</p>
+                                <h3 className="text-3xl font-black text-emerald-400 leading-none">{filteredStats.completed}</h3>
+                            </div>
+                            <div className="w-px h-10 bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Pending</p>
+                                <h3 className="text-3xl font-black text-amber-400 leading-none">{filteredStats.inProgress}</h3>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 w-full max-w-md px-10">
                             <div className="flex justify-between items-end mb-2.5">
                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Execution Progress</span>
-                                <span className="text-sm font-black text-indigo-400">{filteredStats.rate}%</span>
+                                <span className="text-[10px] font-black text-indigo-400/80">{filteredStats.rate}%</span>
                             </div>
                             <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
                                 <div 
                                     className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all duration-1000 ease-out rounded-full"
                                     style={{ width: `${filteredStats.rate}%` }}
                                 />
-                                {/* Pulsing Glow Effect */}
                                 <div 
                                     className="absolute top-0 right-0 bottom-0 w-8 bg-white/20 blur-md animate-pulse"
                                     style={{ left: `calc(${filteredStats.rate}% - 20px)` }}
                                 />
-                            </div>
-                        </div>
-
-                        {/* Performance Metrics */}
-                        <div className="flex items-center gap-10 bg-white/5 px-8 py-3 rounded-2xl border border-white/5">
-                            <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total</p>
-                                <h3 className="text-xl font-black text-white leading-none">{filteredStats.total}</h3>
-                            </div>
-                            <div className="w-px h-8 bg-white/10" />
-                            <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Done</p>
-                                <h3 className="text-xl font-black text-emerald-400 leading-none">{filteredStats.completed}</h3>
-                            </div>
-                            <div className="w-px h-8 bg-white/10" />
-                            <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Pending</p>
-                                <h3 className="text-xl font-black text-amber-400 leading-none">{filteredStats.inProgress}</h3>
                             </div>
                         </div>
                     </div>
@@ -383,10 +439,9 @@ const MarketingSheet = ({
             )}
 
             <div className="px-4 pt-2 pb-2">
-                {/* Tabs and Filters */}
                 <div className="flex items-center justify-between mt-4 border-b border-slate-200 dark:border-white/5 pb-2">
                     <div className="flex gap-8">
-                        {['Table View'].map(tab => (
+                        {!filterProduct && ['Table View'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab.toLowerCase().split(' ')[0])}
@@ -454,12 +509,12 @@ const MarketingSheet = ({
 
             <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50 dark:bg-white/[0.01]">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
-                    <thead className="sticky top-0 z-20 bg-white dark:bg-[#0a0f1d]">
-                        <tr className="border-b border-slate-200 dark:border-white/5">
-                            <th className="px-1 py-1 w-12 text-[12px] font-black text-slate-500 text-center uppercase tracking-[0.2em]">No.</th>
-                            <th className="px-1 py-1 w-10"></th>
+                    <thead className="sticky top-0 z-20 bg-[#d97706]">
+                        <tr className="divide-x divide-white/10">
+                            <th className="p-2 w-12 bg-[#b45309] text-[12px] font-black text-white text-center uppercase tracking-tight">No.</th>
+                            <th className="p-2 w-10 bg-[#b45309]"></th>
                             {columns.map(col => (
-                                <th key={col.key} className={`px-1 py-1 text-[12px] font-black text-slate-500 uppercase tracking-[0.2em] ${col.width}`}>
+                                <th key={col.key} className={`p-2 text-[12px] font-black text-white uppercase tracking-tight ${col.width}`}>
                                     <div className="flex items-center gap-2">
                                         {col.icon}
                                         <span>{col.label}</span>
@@ -469,185 +524,180 @@ const MarketingSheet = ({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-                        {tasks
-                            .map((task, idx) => ({ ...task, originalIndex: idx }))
-                            .filter(task => {
-                                // Apply product filter if provided (case-insensitive)
-                                if (filterProduct && (task.product || '').toLowerCase() !== filterProduct.toLowerCase()) return false;
+                        {(() => {
+                            const displayTasks = [];
+                            let mainCounter = 0;
+                            let subCounter = 0;
+
+                            tasks.forEach((task, idx) => {
+                                const isSubtask = !!task._isSubtask || (task.product === '' && task.mediaType !== '');
                                 
-                                const matchesChannel = filterChannel === 'All Channels' || task.marketingChannel === filterChannel;
-                                const matchesStatus = filterStatus === 'All Status' || (task.status || '').toLowerCase() === filterStatus.toLowerCase();
-                                return matchesChannel && matchesStatus;
-                            })
-                            .map((task, displayIdx) => {
-                                const idx = task.originalIndex;
-                                const isPublished = (task.status || '').toLowerCase() === 'published';
+                                // Apply product filter
+                                if (filterProduct) {
+                                    const fpLower = filterProduct.toLowerCase();
+                                    if (!isSubtask && (task.product || '').toLowerCase() !== fpLower) return;
+                                    if (isSubtask) {
+                                        const parentTask = tasks.slice(0, idx).reverse().find(t => t.product && !t._isSubtask);
+                                        if ((parentTask?.product || '').toLowerCase() !== fpLower) return;
+                                    }
+                                }
+                                
+                                let displayNumber = '';
+                                if (!isSubtask) {
+                                    mainCounter++;
+                                    subCounter = 0;
+                                    displayNumber = `${mainCounter}`;
+                                } else {
+                                    subCounter++;
+                                    displayNumber = `${mainCounter}.${subCounter}`;
+                                }
+
+                                let hasSubtasks = false;
+                                if (!isSubtask) {
+                                    if (idx + 1 < tasks.length) {
+                                        const nextTask = tasks[idx + 1];
+                                        if (nextTask._isSubtask || (nextTask.product === '' && nextTask.mediaType !== '')) {
+                                            hasSubtasks = true;
+                                        }
+                                    }
+                                }
+
+                                if (isSubtask && collapsedMains[mainCounter]) {
+                                    return;
+                                }
+
+                                displayTasks.push({
+                                    task,
+                                    originalIndex: idx,
+                                    isSubtask,
+                                    displayNumber,
+                                    mainCounter,
+                                    hasSubtasks
+                                });
+                            });
+
+                            return displayTasks.map(({ task, originalIndex, isSubtask, displayNumber, mainCounter, hasSubtasks }) => {
+                                const idx = originalIndex;
+                                const isCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+                                
+                                if (!filterProduct) {
+                                    if (filterChannel !== 'All Channels' && task.marketingChannel !== filterChannel) return null;
+                                    const statusMatch = filterStatus === 'All Status' || (task.status || '').toLowerCase() === filterStatus.toLowerCase();
+                                    if (!statusMatch) return null;
+                                }
+
                                 return (
-                                    <tr key={idx} className={`group hover:bg-slate-100 dark:bg-white/[0.02] transition-colors ${isPublished ? 'bg-emerald-500/5' : ''}`}>
-                                    <td className="px-1 py-1 text-center">
-                                        <span className="text-[12px] font-black text-slate-600 group-hover:text-slate-600 dark:text-slate-400 transition-colors">{idx + 1}</span>
-                                    </td>
-                                    <td className="px-1 py-0.5 text-center">
-                                        <button
-                                            onClick={() => removeRow(idx)}
-                                            className="p-1 text-slate-700 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={12} />
-                                        </button>
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.product}
-                                            onChange={(e) => handleInputChange(idx, 'product', e.target.value)}
-                                            className="text-[14px] font-bold text-slate-900 dark:text-slate-200"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.mediaType}
-                                            onChange={(e) => handleInputChange(idx, 'mediaType', e.target.value)}
-                                            className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.marketingChannel}
-                                            onChange={(e) => handleInputChange(idx, 'marketingChannel', e.target.value)}
-                                            className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.mainGoal}
-                                            onChange={(e) => handleInputChange(idx, 'mainGoal', e.target.value)}
-                                            className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5 text-center">
-                                        <button
-                                            onClick={() => handleInputChange(idx, 'done', !task.done)}
-                                            className={`mx-auto w-4 h-4 rounded-md border flex items-center justify-center transition-all ${task.done ? 'bg-indigo-500 border-indigo-500 text-slate-900 dark:text-white' : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-slate-700 text-transparent dark:text-transparent'}`}
-                                        >
-                                            <CheckCircle size={10} />
-                                        </button>
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.description}
-                                            onChange={(e) => handleInputChange(idx, 'description', e.target.value)}
-                                            className="text-[14px] font-medium text-slate-600 dark:text-slate-400"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.outcome}
-                                            onChange={(e) => handleInputChange(idx, 'outcome', e.target.value)}
-                                            className="text-[14px] font-medium text-slate-600 dark:text-slate-400"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                                                <User size={9} className="text-indigo-400" />
-                                            </div>
-                                            <AutoResizeTextarea
-                                                value={task.owner}
-                                                onChange={(e) => handleInputChange(idx, 'owner', e.target.value)}
-                                                className="text-[14px] font-bold text-slate-700 dark:text-slate-300"
-                                                placeholder="..."
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <div className={`rounded-lg border px-2 py-0.5 transition-all ${getStatusStyles(task.status)}`}>
-                                            <select
-                                                className="w-full bg-transparent border-none focus:ring-0 text-[9px] font-black uppercase tracking-widest cursor-pointer appearance-none outline-none"
-                                                value={task.status}
-                                                onChange={(e) => handleInputChange(idx, 'status', e.target.value)}
+                                    <tr key={idx} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'}`}>
+                                        <td className={`p-1.5 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'} w-12`}>
+                                            <span className={isSubtask ? 'text-[11px] opacity-70' : 'text-[14px]'}>
+                                                {displayNumber}
+                                            </span>
+                                        </td>
+                                        <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : 'bg-slate-900/40'}`}>
+                                            <button 
+                                                onClick={() => removeRow(idx)}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                                             >
-                                                <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
-                                                <option value="planning" className="bg-white dark:bg-[#0a0f1d]">Planning</option>
-                                                <option value="developing" className="bg-white dark:bg-[#0a0f1d]">Developing</option>
-                                                <option value="under review" className="bg-white dark:bg-[#0a0f1d]">Review</option>
-                                                <option value="on hold" className="bg-white dark:bg-[#0a0f1d]">Hold</option>
-                                                <option value="published" className="bg-white dark:bg-[#0a0f1d]">Published</option>
-                                            </select>
-                                        </div>
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <div className={`rounded-lg border px-2 py-0.5 transition-all ${getPriorityStyles(task.priority)}`}>
-                                            <select
-                                                className="w-full bg-transparent border-none focus:ring-0 text-[9px] font-black uppercase tracking-widest cursor-pointer appearance-none outline-none"
-                                                value={task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}
-                                                onChange={(e) => handleInputChange(idx, 'priority', e.target.value)}
-                                            >
-                                                <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
-                                                <option value="High" className="bg-white dark:bg-[#0a0f1d]">High</option>
-                                                <option value="Medium" className="bg-white dark:bg-[#0a0f1d]">Medium</option>
-                                                <option value="Low" className="bg-white dark:bg-[#0a0f1d]">Low</option>
-                                            </select>
-                                        </div>
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <input
-                                            type="date"
-                                            value={task.startDate}
-                                            onChange={(e) => handleInputChange(idx, 'startDate', e.target.value)}
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <input
-                                            type="date"
-                                            value={task.endDate}
-                                            onChange={(e) => handleInputChange(idx, 'endDate', e.target.value)}
-                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.notes}
-                                            onChange={(e) => handleInputChange(idx, 'notes', e.target.value)}
-                                            className="text-[11px] font-medium text-slate-500 italic"
-                                            placeholder="..."
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <User size={11} className="text-slate-600" />
-                                            <AutoResizeTextarea
-                                                value={task.completedBy}
-                                                onChange={(e) => handleInputChange(idx, 'completedBy', e.target.value)}
-                                                className="text-[11px] font-bold text-slate-600 dark:text-slate-400"
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <AutoResizeTextarea
-                                            value={task.completedTime}
-                                            onChange={(e) => handleInputChange(idx, 'completedTime', e.target.value)}
-                                            className="text-[11px] font-bold text-slate-600 dark:text-slate-400"
-                                        />
-                                    </td>
-                                    <td className="px-1 py-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <User size={11} className="text-slate-600" />
-                                            <AutoResizeTextarea
-                                                value={task.reportTo}
-                                                onChange={(e) => handleInputChange(idx, 'reportTo', e.target.value)}
-                                                className="text-[11px] font-bold text-slate-600 dark:text-slate-400"
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </td>
+                                        {columns.map(col => (
+                                            <td key={col.key} className={`p-1 ${col.width} relative`}>
+                                                {col.key === 'product' ? (
+                                                    <div className={`flex items-start ${isSubtask ? 'pl-6' : ''}`}>
+                                                        {!isSubtask && hasSubtasks && (
+                                                            <button
+                                                                onClick={() => toggleCollapse(mainCounter)}
+                                                                className="mt-1 mr-2 text-slate-500 hover:text-indigo-500 transition-colors shrink-0"
+                                                            >
+                                                                {collapsedMains[mainCounter] ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                                                            </button>
+                                                        )}
+                                                        {!isSubtask && !hasSubtasks && <div className="w-[22px] shrink-0" />}
+                                                        
+                                                        {isSubtask && (
+                                                            <>
+                                                                <div className="absolute left-2 top-0 bottom-0 w-px bg-indigo-500/20" />
+                                                                <div className="absolute left-2 top-1/2 w-3 h-px bg-indigo-500/20" />
+                                                                <CornerDownRight size={12} className="text-indigo-500/50 mt-1 mr-2 shrink-0" />
+                                                            </>
+                                                        )}
+                                                        
+                                                        <div className="flex-1 relative group/input">
+                                                            <AutoResizeTextarea
+                                                                value={isSubtask && filterProduct ? task.mediaType : task[col.key]}
+                                                                onChange={(e) => handleInputChange(idx, isSubtask && filterProduct ? 'mediaType' : col.key, e.target.value)}
+                                                                placeholder={isSubtask ? "Subtask details..." : "Enter goal/objective..."}
+                                                                className={`${isSubtask ? 'text-slate-500 font-medium' : 'font-bold'} ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
+                                                            />
+                                                            {!isSubtask && filterProduct && task.product?.trim() && (
+                                                                <button
+                                                                    onClick={() => handleAddSubtask(idx)}
+                                                                    className="absolute -right-2 top-1/2 -translate-y-1/2 p-1 text-indigo-500 opacity-0 group-hover/input:opacity-100 hover:bg-indigo-500/10 rounded-full transition-all"
+                                                                    title="Add Subtask"
+                                                                >
+                                                                    <Plus size={12} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : col.key === 'done' ? (
+                                                    <div className="flex justify-center">
+                                                        <button 
+                                                            onClick={() => handleInputChange(idx, 'done', !task.done)}
+                                                            className={`p-1.5 rounded-xl transition-all ${task.done ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                        >
+                                                            {task.done ? <CheckCircle size={16} /> : <Circle size={16} />}
+                                                        </button>
+                                                    </div>
+                                                ) : col.key === 'status' ? (
+                                                    <div className={`rounded-lg border px-2 py-0.5 transition-all ${getStatusStyles(task.status)}`}>
+                                                        <select
+                                                            className="w-full bg-transparent border-none focus:ring-0 text-[9px] font-black uppercase tracking-widest cursor-pointer appearance-none outline-none"
+                                                            value={task.status}
+                                                            onChange={(e) => handleInputChange(idx, 'status', e.target.value)}
+                                                        >
+                                                            <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
+                                                            <option value="planning" className="bg-white dark:bg-[#0a0f1d]">Planning</option>
+                                                            <option value="developing" className="bg-white dark:bg-[#0a0f1d]">Developing</option>
+                                                            <option value="under review" className="bg-white dark:bg-[#0a0f1d]">Review</option>
+                                                            <option value="on hold" className="bg-white dark:bg-[#0a0f1d]">Hold</option>
+                                                            <option value="published" className="bg-white dark:bg-[#0a0f1d]">Published</option>
+                                                        </select>
+                                                    </div>
+                                                ) : col.key === 'priority' ? (
+                                                    <div className={`rounded-lg border px-2 py-0.5 transition-all ${getPriorityStyles(task.priority)}`}>
+                                                        <select
+                                                            className="w-full bg-transparent border-none focus:ring-0 text-[9px] font-black uppercase tracking-widest cursor-pointer appearance-none outline-none"
+                                                            value={task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}
+                                                            onChange={(e) => handleInputChange(idx, 'priority', e.target.value)}
+                                                        >
+                                                            <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
+                                                            <option value="High" className="bg-white dark:bg-[#0a0f1d]">High</option>
+                                                            <option value="Medium" className="bg-white dark:bg-[#0a0f1d]">Medium</option>
+                                                            <option value="Low" className="bg-white dark:bg-[#0a0f1d]">Low</option>
+                                                        </select>
+                                                    </div>
+                                                ) : col.key === 'startDate' || col.key === 'endDate' ? (
+                                                    <input
+                                                        type="date"
+                                                        value={task[col.key]}
+                                                        onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
+                                                        className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
+                                                    />
+                                                ) : (
+                                                    <AutoResizeTextarea
+                                                        value={task[col.key]}
+                                                        onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
+                                                        className={`${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
+                                                    />
+                                                )}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                );
+                            });
+                        })()}
                     </tbody>
                 </table>
             </div>
