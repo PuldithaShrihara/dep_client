@@ -290,7 +290,18 @@ const Dashboard = () => {
             });
 
             setShowCreateForm(false);
-            toast.success('Plan created successfully', { id: toastId });
+            
+            // For Marketing, ensure we go to the product view after creation
+            if (selectedDept?.name === 'Marketing') {
+                setActivePlan(res.data);
+                setIsEditingSheet(false);
+                setActiveProductFilter(null);
+                setSearchParams({ deptId: selectedDept._id, planId: res.data._id });
+            } else {
+                setActivePlan(res.data);
+                setIsEditingSheet(true);
+                setSearchParams({ deptId: selectedDept._id, planId: res.data._id });
+            }
         } catch (err) {
             console.error('Error creating plan:', err.response?.data || err.message);
             toast.error(getAxiosErrorMessage(err, 'Failed to create plan'), { id: toastId });
@@ -729,7 +740,7 @@ const Dashboard = () => {
                                     </div>
 
                                     <div>
-                                        {!showCreateForm ? (
+                                        {((!showCreateForm && selectedDept?.name !== 'Marketing') ? (
                                             <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-100/80 border border-dashed border-slate-300 rounded-[32px] min-h-[400px] dark:bg-white/[0.02] dark:border-white/10">
                                                 <button
                                                     type="button"
@@ -742,57 +753,62 @@ const Dashboard = () => {
                                         ) : (
                                             <form
                                                 onSubmit={handleCreatePlan}
-                                                className="space-y-4 bg-slate-50/90 p-8 rounded-[32px] border border-slate-200/80 dark:bg-white/[0.02] dark:border-white/5"
+                                                className="space-y-5 bg-slate-50/90 p-8 rounded-[32px] border border-slate-200/80 dark:bg-white/[0.02] dark:border-white/5"
                                             >
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    placeholder="Strategic Title"
-                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900 dark:bg-slate-900/50 dark:border-white/10 dark:text-white"
-                                                    value={newPlan.title}
-                                                    onChange={(e) => setNewPlan({ ...newPlan, title: e.target.value })}
-                                                />
+                                                <div className="mb-2">
+                                                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Deploy New Plan</h3>
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Initialize Marketing Cycle</p>
+                                                </div>
 
-                                                <select
-                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900 dark:bg-slate-900/50 dark:border-white/10 dark:text-white"
-                                                    value={newPlan.month}
-                                                    onChange={(e) => setNewPlan({ ...newPlan, month: e.target.value })}
-                                                    required
-                                                >
-                                                    <option value="">Select Month</option>
-                                                    {[
-                                                        'January', 'February', 'March', 'April', 'May', 'June',
-                                                        'July', 'August', 'September', 'October', 'November', 'December'
-                                                    ].map(m => (
-                                                        <option key={m} value={m}>{m}</option>
-                                                    ))}
-                                                </select>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Plan Title</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        placeholder="e.g. Summer Promo 2026"
+                                                        className="w-full bg-white border border-slate-200 dark:bg-slate-900/50 dark:border-white/10 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                                                        value={newPlan.title}
+                                                        onChange={(e) => setNewPlan({ ...newPlan, title: e.target.value })}
+                                                    />
+                                                </div>
 
-                                                <input
-                                                    type="number"
-                                                    required
-                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900 dark:bg-slate-900/50 dark:border-white/10 dark:text-white"
-                                                    value={newPlan.year}
-                                                    onChange={(e) => setNewPlan({ ...newPlan, year: e.target.value })}
-                                                />
-
-                                                <textarea
-                                                    rows="3"
-                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900 dark:bg-slate-900/50 dark:border-white/10 dark:text-white"
-                                                    placeholder="Operational Details"
-                                                    value={newPlan.description}
-                                                    onChange={(e) => setNewPlan({ ...newPlan, description: e.target.value })}
-                                                />
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Target Month</label>
+                                                    <select
+                                                        required
+                                                        className="w-full bg-white border border-slate-200 dark:bg-slate-900/50 dark:border-white/10 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all cursor-pointer"
+                                                        value={newPlan.month}
+                                                        onChange={(e) => setNewPlan({ ...newPlan, month: e.target.value })}
+                                                    >
+                                                        <option value="">Select Month...</option>
+                                                        {[
+                                                            'January', 'February', 'March', 'April', 'May', 'June',
+                                                            'July', 'August', 'September', 'October', 'November', 'December'
+                                                        ].map(m => (
+                                                            <option key={m} value={m}>{m}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
 
                                                 <button
                                                     type="submit"
                                                     disabled={creatingPlan}
-                                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/60 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-600/20 transition-all uppercase tracking-widest text-xs"
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/60 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-600/20 transition-all uppercase tracking-widest text-xs mt-4"
                                                 >
-                                                    {creatingPlan ? 'Saving...' : 'Execute Deployment'}
+                                                    {creatingPlan ? 'Initializing...' : 'Execute Deployment'}
                                                 </button>
+                                                
+                                                {selectedDept?.name !== 'Marketing' && (
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setShowCreateForm(false)}
+                                                        className="w-full py-2 text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
                                             </form>
-                                        )}
+                                        ))}
                                     </div>
                                 </div>
                             )}

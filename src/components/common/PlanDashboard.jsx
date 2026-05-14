@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
     Layout, Package, ListTodo, Target, Clock, Edit3, Trash2, 
-    ChevronRight, Plus, TrendingUp, ArrowLeft, BarChart3, X
+    ChevronRight, Plus, TrendingUp, ArrowLeft, BarChart3, X, CheckCircle
 } from 'lucide-react';
 
 const PlanDashboard = ({ 
@@ -211,12 +211,7 @@ const PlanDashboard = ({
                             <p className="text-slate-500 text-xs font-bold tracking-tight">Track progress of each product under this plan</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button 
-                                onClick={() => setIsAddModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20"
-                            >
-                                <Plus size={14} /> Add Product
-                            </button>
+                            {/* Add Product button removed as per request */}
                         </div>
                     </div>
 
