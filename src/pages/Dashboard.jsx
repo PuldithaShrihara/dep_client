@@ -549,6 +549,21 @@ const Dashboard = () => {
                                     <PlanDashboard 
                                         plan={activePlan}
                                         onEdit={() => setIsEditingSheet(true)}
+                                        onUpdatePlan={async (title, month) => {
+                                            try {
+                                                const res = await axios.put(`${API_ORIGIN}/api/plans/${activePlan._id}`, {
+                                                    title, month
+                                                }, {
+                                                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                                                });
+                                                setActivePlan(res.data);
+                                                setPlans(prev => prev.map(p => p._id === res.data._id ? res.data : p));
+                                                alert('Plan updated successfully');
+                                            } catch (err) {
+                                                console.error('Error updating plan:', err);
+                                                alert('Error updating plan details');
+                                            }
+                                        }}
                                         onDelete={(e) => handleDeletePlan(activePlan._id, e)}
                                         onAddProduct={handleAddProduct}
                                         onDeleteProduct={handleDeleteProduct}

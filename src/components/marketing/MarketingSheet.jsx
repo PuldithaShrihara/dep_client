@@ -109,16 +109,16 @@ const MarketingSheet = ({
     const handleAddSubtask = (idx) => {
         let insertIndex = idx + 1;
         while (insertIndex < tasks.length) {
-            if (tasks[insertIndex].product?.trim() && !tasks[insertIndex]._isSubtask) {
+            if ((tasks[insertIndex].product?.trim() || tasks[insertIndex].mainGoal?.trim()) && !tasks[insertIndex]._isSubtask) {
                 break;
             }
             insertIndex++;
         }
 
-        const parentTask = tasks[index];
+        const parentTask = tasks[idx];
         const newRow = {
-            product: parentTask.product || '', 
-            assets: parentTask.assets || '',
+            product: '', 
+            assets: parentTask.assets || parentTask.product || '',
             mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
@@ -135,12 +135,15 @@ const MarketingSheet = ({
 
     // Statistics Calculation
     const stats = useMemo(() => {
-        const validTasks = tasks.filter(t => 
-            (t.product && t.product.trim()) || 
-            (t.mainGoal && t.mainGoal.trim()) || 
-            (t.description && t.description.trim()) ||
-            t._isSubtask
-        );
+        const validTasks = tasks.filter(t => {
+            const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
+            if (isSubtask) return false;
+
+            return (t.product && t.product.trim()) || 
+                   (t.mainGoal && t.mainGoal.trim()) || 
+                   (t.description && t.description.trim());
+        });
+
         const total = validTasks.length;
         const completed = validTasks.filter(t => {
             const status = (t.status || '').toLowerCase();
@@ -157,13 +160,18 @@ const MarketingSheet = ({
         const filteredTasks = tasks.filter(t => {
             if (!filterProduct) return true;
             const fpLower = filterProduct.toLowerCase();
+            
+            // Check if it's a subtask (based on _isSubtask flag OR empty product name with media/goal)
+            const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
+            if (isSubtask) return false;
+
             return (t.assets === filterProduct) || (t.product && t.product.toLowerCase() === fpLower);
         });
+        
         const validTasks = filteredTasks.filter(t => 
             (t.product && t.product.trim()) || 
             (t.mainGoal && t.mainGoal.trim()) || 
-            (t.description && t.description.trim()) ||
-            (t.mediaType && t.mediaType.trim())
+            (t.description && t.description.trim())
         );
         const total = validTasks.length;
         const completed = validTasks.filter(t => {
@@ -508,9 +516,6 @@ const MarketingSheet = ({
                             </div>
                         </>
                     )}
-                        <div className="ml-4 text-xs font-bold text-slate-600">
-                            {stats.total} rows
-                        </div>
                         <button 
                             onClick={handleSave}
                             disabled={saving}
@@ -549,22 +554,28 @@ const MarketingSheet = ({
                             const displayTasks = [];
                             let mainCounter = 0;
                             let subCounter = 0;
+                            let currentMainCompleted = false;
+                            let lastMainTask = null;
+                            let lastMainIsLinked = false;
 
                             tasks.forEach((task, idx) => {
-                                const isSubtask = !!task._isSubtask || (task.product === '' && task.mediaType !== '');
-                                
+                                const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
+                                const taskCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+
+                                if (!isSubtask) {
+                                    lastMainTask = task;
+                                    if (filterProduct) {
+                                        const fpLower = filterProduct.toLowerCase();
+                                        lastMainIsLinked = (task.assets === filterProduct) || (task.product && task.product.toLowerCase() === fpLower);
+                                    } else {
+                                        lastMainIsLinked = true;
+                                    }
+                                }
+
                                 // Apply product filter
                                 if (filterProduct) {
-                                    const fpLower = filterProduct.toLowerCase();
-                                    const isLinkedToProduct = (task.assets === filterProduct) || (task.product && task.product.toLowerCase() === fpLower);
-                                    
-                                    if (!isSubtask && !isLinkedToProduct) return;
-                                    
-                                    if (isSubtask) {
-                                        const parentTask = tasks.slice(0, idx).reverse().find(t => (t.product || t.mainGoal || t.mediaType) && !t._isSubtask);
-                                        const parentIsLinked = parentTask && ((parentTask.assets === filterProduct) || (parentTask.product && parentTask.product.toLowerCase() === fpLower));
-                                        if (!parentIsLinked) return;
-                                    }
+                                    if (!isSubtask && !lastMainIsLinked) return;
+                                    if (isSubtask && !lastMainIsLinked) return;
                                 }
                                 
                                 let displayNumber = '';
@@ -572,6 +583,7 @@ const MarketingSheet = ({
                                     mainCounter++;
                                     subCounter = 0;
                                     displayNumber = `${mainCounter}`;
+                                    currentMainCompleted = taskCompleted;
                                 } else {
                                     subCounter++;
                                     displayNumber = `${mainCounter}.${subCounter}`;
@@ -581,7 +593,7 @@ const MarketingSheet = ({
                                 if (!isSubtask) {
                                     if (idx + 1 < tasks.length) {
                                         const nextTask = tasks[idx + 1];
-                                        if (nextTask._isSubtask || (nextTask.product === '' && nextTask.mediaType !== '')) {
+                                        if (nextTask._isSubtask || (nextTask.product === '' && (nextTask.mediaType !== '' || nextTask.mainGoal !== ''))) {
                                             hasSubtasks = true;
                                         }
                                     }
@@ -597,13 +609,15 @@ const MarketingSheet = ({
                                     isSubtask,
                                     displayNumber,
                                     mainCounter,
-                                    hasSubtasks
+                                    hasSubtasks,
+                                    parentCompleted: !isSubtask ? false : currentMainCompleted
                                 });
                             });
 
-                            return displayTasks.map(({ task, originalIndex, isSubtask, displayNumber, mainCounter, hasSubtasks }) => {
+                            return displayTasks.map(({ task, originalIndex, isSubtask, displayNumber, mainCounter, hasSubtasks, parentCompleted }) => {
                                 const idx = originalIndex;
-                                const isCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+                                const isTaskCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+                                const isCompleted = isTaskCompleted || parentCompleted;
                                 
                                 if (!filterProduct) {
                                     if (filterChannel !== 'All Channels' && task.marketingChannel !== filterChannel) return null;
@@ -613,12 +627,12 @@ const MarketingSheet = ({
 
                                 return (
                                     <tr key={idx} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'}`}>
-                                        <td className={`p-1.5 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : 'bg-slate-900/60 text-slate-500'} w-12`}>
+                                        <td className={`p-1.5 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : (isSubtask ? 'bg-[#0f172a] text-slate-500' : 'bg-slate-900/60 text-slate-400')} w-12`}>
                                             <span className={isSubtask ? 'text-[11px] opacity-70' : 'text-[14px]'}>
                                                 {displayNumber}
                                             </span>
                                         </td>
-                                        <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : 'bg-slate-900/40'}`}>
+                                        <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : (isSubtask ? 'bg-[#0f172a]/50' : 'bg-slate-900/40')}`}>
                                             <button 
                                                 onClick={() => removeRow(idx)}
                                                 className="p-1.5 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
@@ -645,6 +659,8 @@ const MarketingSheet = ({
                                                                 <div className="absolute left-2 top-0 bottom-0 w-px bg-indigo-500/20" />
                                                                 <div className="absolute left-2 top-1/2 w-3 h-px bg-indigo-500/20" />
                                                                 <CornerDownRight size={12} className="text-indigo-500/50 mt-1 mr-2 shrink-0" />
+                                                                <div className="absolute left-3 top-0 bottom-1/2 w-px bg-slate-300 dark:bg-slate-600" />
+                                                                <div className="absolute left-3 top-1/2 w-4 h-px bg-slate-300 dark:bg-slate-600" />
                                                             </>
                                                         )}
                                                         
@@ -655,13 +671,13 @@ const MarketingSheet = ({
                                                                 placeholder={isSubtask ? "Subtask details..." : "Enter goal/objective..."}
                                                                 className={`${isSubtask ? 'text-slate-500 font-medium' : 'font-bold'} ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
                                                             />
-                                                            {!isSubtask && filterProduct && task.product?.trim() && (
+                                                            {!isSubtask && (task.product?.trim() || task.mainGoal?.trim()) && (
                                                                 <button
                                                                     onClick={() => handleAddSubtask(idx)}
-                                                                    className="absolute -right-2 top-1/2 -translate-y-1/2 p-1 text-indigo-500 opacity-0 group-hover/input:opacity-100 hover:bg-indigo-500/10 rounded-full transition-all"
+                                                                    className="absolute -right-2 top-1/2 -translate-y-1/2 w-5 h-5 bg-[#d97706] hover:bg-[#b45309] text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover/input:opacity-100 shadow-lg shadow-orange-500/20 z-10"
                                                                     title="Add Subtask"
                                                                 >
-                                                                    <Plus size={12} />
+                                                                    <Plus size={12} strokeWidth={4} />
                                                                 </button>
                                                             )}
                                                         </div>
