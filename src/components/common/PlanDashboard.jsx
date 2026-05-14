@@ -42,6 +42,9 @@ const PlanDashboard = ({
         // 2. Merge in tasks and find any additional products from legacy data
         if (plan.tasks) {
             plan.tasks.forEach(task => {
+                const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
+                if (isSubtask) return; // Ignore subtasks in high-level product progress
+
                 const productName = task.assets || task.product || 'General/Miscellaneous';
                 
                 if (!productMap[productName]) {
