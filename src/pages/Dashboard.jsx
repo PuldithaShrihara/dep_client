@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     Briefcase, DollarSign, Cpu,
     ShieldCheck, Factory, TrendingUp, Users, Calendar, ArrowUpRight,
-    X, Plus, Clock, Target, CheckCircle2, Trash2, ChevronLeft, Package
+    X, Plus, Clock, Target, CheckCircle2, Trash2, ChevronLeft, Package, ArrowLeft
 } from 'lucide-react';
 import Header from '../components/common/Header';
 
@@ -88,7 +88,7 @@ const Dashboard = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const isFullScreen = activePlan || showCreateForm || searchParams.get('planId');
+    const isFullScreen = (activePlan || (showCreateForm && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name))) || searchParams.get('planId');
 
     const visibleDepartments = useMemo(() => {
         if (!user) return [];
@@ -242,6 +242,10 @@ const Dashboard = () => {
             if (plan) {
                 if (!activePlan || activePlan._id !== planId) {
                     setActivePlan(plan);
+                    // Only Marketing uses the product drill-down view
+                    if (selectedDept?.name !== 'Marketing') {
+                        setIsEditingSheet(true);
+                    }
                 }
             } else {
                 const deptId = searchParams.get('deptId');
@@ -252,7 +256,7 @@ const Dashboard = () => {
             setIsEditingSheet(false);
             setActiveProductFilter(null);
         }
-    }, [searchParams, plans]);
+    }, [searchParams, plans, selectedDept]);
 
     const handleCreatePlan = async (e) => {
         e.preventDefault();
@@ -501,13 +505,15 @@ const Dashboard = () => {
                             : 'max-w-4xl max-h-[90vh] rounded-[40px]'
                         }`}>
                         {(!activePlan && !showCreateForm) && (
-                            <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/5 flex justify-end items-center bg-white/40 dark:bg-white/[0.02]">
-                                <button
-                                    type="button"
+                            <div className="p-8 pb-4 bg-white/40 dark:bg-white/[0.02] border-b border-slate-200/80 dark:border-white/5">
+                                <button 
                                     onClick={() => setSearchParams({})}
-                                    className="p-2 hover:bg-slate-200/80 dark:hover:bg-white/5 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                                    className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
                                 >
-                                    <X size={20} />
+                                    <div className="w-8 h-8 rounded-full bg-slate-200/50 dark:bg-white/5 group-hover:bg-indigo-600 flex items-center justify-center transition-all">
+                                        <ArrowLeft size={16} className="group-hover:text-white transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Departments</span>
                                 </button>
                             </div>
                         )}
@@ -541,8 +547,7 @@ const Dashboard = () => {
                                         }}
                                         readOnly={!canEditDepartment(user, selectedDept?.name)}
                                         onBack={() => {
-                                            const deptId = searchParams.get('deptId');
-                                            setSearchParams(deptId ? { deptId } : {});
+                                            setSearchParams({});
                                         }}
                                     />
                                 </div>
@@ -553,22 +558,25 @@ const Dashboard = () => {
                                             type="button"
                                             onClick={() => {
                                                 if (showCreateForm) {
-                                                    const deptId = searchParams.get('deptId');
-                                                    setSearchParams(deptId ? { deptId } : {});
+                                                    setSearchParams({});
                                                     setShowCreateForm(false);
                                                     setActiveProductFilter(null);
+                                                } else if (selectedDept?.name !== 'Marketing') {
+                                                    // For non-marketing, go back to departments dashboard
+                                                    setSearchParams({});
                                                 } else {
+                                                    // For Marketing, go back to product drill-down
                                                     setIsEditingSheet(false);
                                                     setActiveProductFilter(null);
                                                 }
                                             }}
-                                            className="group flex items-center gap-3 px-5 py-2.5 bg-white/5 hover:bg-indigo-600 border border-white/10 hover:border-indigo-500 rounded-2xl transition-all duration-300"
+                                            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
                                         >
-                                            <div className="w-8 h-8 rounded-xl bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition-colors">
-                                                <ChevronLeft className="text-indigo-400 group-hover:text-white" size={20} />
+                                            <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-indigo-600 flex items-center justify-center transition-all">
+                                                <ArrowLeft size={16} className="group-hover:text-white transition-colors" />
                                             </div>
-                                            <span className="text-xs font-black text-slate-400 group-hover:text-white uppercase tracking-[0.2em]">
-                                                {showCreateForm ? 'Back to All Plans' : 'Back to Products'}
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                                                {showCreateForm ? 'Back to Departments' : (selectedDept?.name !== 'Marketing' ? 'Back to Departments' : 'Back to Products')}
                                             </span>
                                         </button>
                                     </div>

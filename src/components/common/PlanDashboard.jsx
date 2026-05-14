@@ -123,6 +123,16 @@ const PlanDashboard = ({
 
             {/* Header */}
             <div className="p-8 pb-4">
+                <button 
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 group"
+                >
+                    <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-indigo-600 flex items-center justify-center transition-all">
+                        <ArrowLeft size={16} className="group-hover:text-white transition-colors" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Departments</span>
+                </button>
+
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <div className="flex items-center gap-3 text-indigo-400 font-black text-[10px] uppercase tracking-[0.2em] mb-2">

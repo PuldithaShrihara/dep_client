@@ -116,6 +116,27 @@ const MarketingSheet = ({
         return { total, completed, inProgress, rate };
     }, [tasks]);
 
+    // Statistics for specifically filtered product (Campaign Page)
+    const filteredStats = useMemo(() => {
+        const filteredTasks = tasks.filter(t => 
+            filterProduct ? (t.product || '').toLowerCase() === filterProduct.toLowerCase() : true
+        );
+        const validTasks = filteredTasks.filter(t => 
+            (t.product && t.product.trim()) || 
+            (t.mainGoal && t.mainGoal.trim()) || 
+            (t.description && t.description.trim())
+        );
+        const total = validTasks.length;
+        const completed = validTasks.filter(t => {
+            const status = (t.status || '').toLowerCase();
+            return t.done || status === 'completed' || status === 'published';
+        }).length;
+        const inProgress = total - completed;
+        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        return { total, completed, inProgress, rate };
+    }, [tasks, filterProduct]);
+
     const columns = [
         { key: 'product', label: 'Product', icon: <ChevronDown size={14} />, width: 'w-40' },
         { key: 'mediaType', label: 'Media Type', icon: <ChevronDown size={14} />, width: 'w-24' },
@@ -301,6 +322,66 @@ const MarketingSheet = ({
                 </div>
             )}
 
+            {/* Analysis Bar for Filtered View (Campaign Page) */}
+            {filterProduct && (
+                <div className="mx-4 mt-6 p-6 bg-slate-900 border border-white/10 rounded-[28px] shadow-2xl animate-in fade-in slide-in-from-top duration-700">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+                        {/* Campaign Identity */}
+                        <div className="flex items-center gap-5 min-w-0">
+                            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shrink-0 shadow-inner text-indigo-400">
+                                <TrendingUp size={32} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-3 text-indigo-400 font-black text-[10px] uppercase tracking-[0.25em] mb-1">
+                                    <span>Campaign Analysis</span>
+                                    <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20 text-[9px]">Real-time Tracking</span>
+                                </div>
+                                <h2 className="text-2xl font-black text-white tracking-tighter uppercase truncate max-w-md">
+                                    {filterProduct}
+                                </h2>
+                            </div>
+                        </div>
+
+                        {/* Progress Visualization */}
+                        <div className="flex-1 w-full max-w-md px-10 border-x border-white/5">
+                            <div className="flex justify-between items-end mb-2.5">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Execution Progress</span>
+                                <span className="text-sm font-black text-indigo-400">{filteredStats.rate}%</span>
+                            </div>
+                            <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all duration-1000 ease-out rounded-full"
+                                    style={{ width: `${filteredStats.rate}%` }}
+                                />
+                                {/* Pulsing Glow Effect */}
+                                <div 
+                                    className="absolute top-0 right-0 bottom-0 w-8 bg-white/20 blur-md animate-pulse"
+                                    style={{ left: `calc(${filteredStats.rate}% - 20px)` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Performance Metrics */}
+                        <div className="flex items-center gap-10 bg-white/5 px-8 py-3 rounded-2xl border border-white/5">
+                            <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total</p>
+                                <h3 className="text-xl font-black text-white leading-none">{filteredStats.total}</h3>
+                            </div>
+                            <div className="w-px h-8 bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Done</p>
+                                <h3 className="text-xl font-black text-emerald-400 leading-none">{filteredStats.completed}</h3>
+                            </div>
+                            <div className="w-px h-8 bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Pending</p>
+                                <h3 className="text-xl font-black text-amber-400 leading-none">{filteredStats.inProgress}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="px-4 pt-2 pb-2">
                 {/* Tabs and Filters */}
                 <div className="flex items-center justify-between mt-4 border-b border-slate-200 dark:border-white/5 pb-2">
@@ -324,29 +405,33 @@ const MarketingSheet = ({
                     </div>
 
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="flex items-center bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2 text-slate-600 dark:text-slate-400">
-                            <Search size={14} className="mr-3" />
-                            <select 
-                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[120px]"
-                                value={filterChannel}
-                                onChange={(e) => setFilterChannel(e.target.value)}
-                            >
-                                <option>All Channels</option>
-                                <option>Social Media</option>
-                                <option>Email</option>
-                            </select>
-                        </div>
-                        <div className="flex items-center bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2">
-                            <select 
-                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[120px]"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                            >
-                                <option>All Status</option>
-                                <option>Planned</option>
-                                <option>Published</option>
-                            </select>
-                        </div>
+                    {!filterProduct && (
+                        <>
+                            <div className="flex items-center bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2 text-slate-600 dark:text-slate-400">
+                                <Search size={14} className="mr-3" />
+                                <select 
+                                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[120px]"
+                                    value={filterChannel}
+                                    onChange={(e) => setFilterChannel(e.target.value)}
+                                >
+                                    <option>All Channels</option>
+                                    <option>Social Media</option>
+                                    <option>Email</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2">
+                                <select 
+                                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[120px]"
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                >
+                                    <option>All Status</option>
+                                    <option>Planned</option>
+                                    <option>Published</option>
+                                </select>
+                            </div>
+                        </>
+                    )}
                         <div className="ml-4 text-xs font-bold text-slate-600">
                             {stats.total} rows
                         </div>
