@@ -34,6 +34,7 @@ const PlanDashboard = ({
                     category: p.category || 'Campaign',
                     totalTasks: 0,
                     completedTasks: 0,
+                    overdueTasks: 0,
                     image: p.image || null
                 };
             });
@@ -53,21 +54,52 @@ const PlanDashboard = ({
                         category: task.mediaType || 'Marketing',
                         totalTasks: 0,
                         completedTasks: 0,
+                        overdueTasks: 0,
                         image: task.productImage || null
                     };
                 }
                 
+                if (!productMap[productName].overdueTasks) {
+                    productMap[productName].overdueTasks = 0;
+                }
+                
                 productMap[productName].totalTasks += 1;
                 const status = (task.status || '').toLowerCase();
-                if (task.done || status === 'completed' || status === 'published') {
+                const isComp = task.done || status === 'completed' || status === 'published';
+                if (isComp) {
                     productMap[productName].completedTasks += 1;
+                }
+
+                // Check if this task is overdue
+                const isTaskOverdue = (() => {
+                    if (!task.endDate) return false;
+                    if (isComp) {
+                        if (!task.completedTime) return false;
+                        const compDateStr = task.completedTime.split(' ')[0];
+                        const end = new Date(task.endDate);
+                        const comp = new Date(compDateStr);
+                        end.setHours(0,0,0,0);
+                        comp.setHours(0,0,0,0);
+                        return comp.getTime() > end.getTime();
+                    } else {
+                        const end = new Date(task.endDate);
+                        const today = new Date();
+                        end.setHours(0,0,0,0);
+                        today.setHours(0,0,0,0);
+                        return today.getTime() > end.getTime();
+                    }
+                })();
+
+                if (isTaskOverdue) {
+                    productMap[productName].overdueTasks += 1;
                 }
             });
         }
 
         return Object.values(productMap).map(p => ({
             ...p,
-            progress: p.totalTasks > 0 ? Math.round((p.completedTasks / p.totalTasks) * 100) : 0
+            progress: p.totalTasks > 0 ? Math.round((p.completedTasks / p.totalTasks) * 100) : 0,
+            overdueTasks: p.overdueTasks || 0
         }));
     }, [plan]);
 
@@ -295,10 +327,18 @@ const PlanDashboard = ({
                                             <div 
                                                 key={product.name}
                                                 onClick={() => onProductClick && onProductClick(product.name)}
-                                                className="group relative flex items-center gap-6 p-4 bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 rounded-2xl transition-all duration-500 cursor-pointer overflow-hidden shadow-xl"
+                                                className={`group relative flex items-center gap-6 p-4 rounded-2xl transition-all duration-500 cursor-pointer overflow-hidden shadow-xl ${
+                                                    product.overdueTasks > 0
+                                                    ? 'bg-red-500/[0.01] border border-red-500/30 hover:border-red-500/50 shadow-lg shadow-red-950/10'
+                                                    : 'bg-white/[0.02] border border-white/5 hover:border-indigo-500/30'
+                                                }`}
                                             >
                                                 {/* Hover Glow Effect */}
-                                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                <div className={`absolute inset-0 bg-gradient-to-r transition-opacity duration-500 opacity-0 group-hover:opacity-100 ${
+                                                    product.overdueTasks > 0
+                                                    ? 'from-red-500/0 via-red-500/0 to-red-500/5'
+                                                    : 'from-indigo-500/0 via-indigo-500/0 to-indigo-500/5'
+                                                }`} />
                                                 
                                                 <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 group-hover:scale-105 transition-transform duration-500 shadow-2xl">
                                                     <img 
@@ -309,10 +349,17 @@ const PlanDashboard = ({
                                                 </div>
 
                                                 <div className="flex-1 min-w-0 relative">
-                                                    <h4 className="text-lg font-black text-white mb-0.5 uppercase tracking-tight group-hover:text-indigo-400 transition-colors">
-                                                        {product.name}
-                                                    </h4>
-                                                    
+                                                    <div className="flex items-center gap-3">
+                                                        <h4 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-indigo-400 transition-colors">
+                                                            {product.name}
+                                                        </h4>
+                                                        {product.overdueTasks > 0 && (
+                                                            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)] animate-pulse shrink-0">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                                                {product.overdueTasks} Overdue
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-8 mr-2 relative">

@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
     FileText, Clock, ChevronDown, ChevronRight, CheckSquare, Cloud, Flag, File,
-    MoreHorizontal, Download, Layout, Search, CornerDownRight, Target
+    MoreHorizontal, Download, Layout, Search, CornerDownRight, Target, AlertTriangle
 } from 'lucide-react';
 import { API_ORIGIN } from '../../config';
 import Header from '../common/Header';
@@ -70,9 +70,9 @@ const MarketingSheet = ({
             });
             setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(40).fill({
                 product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
-                description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
+                description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
                 startDate: '', endDate: '', notes: '', completedBy: '',
-                completedTime: '', reportTo: ''
+                completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
             }).map(row => ({ ...row })));
         }
     }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
@@ -86,14 +86,17 @@ const MarketingSheet = ({
         description: '',
         outcome: '',
         owner: '',
-        status: 'Planned',
+        status: 'planning',
         priority: '',
         startDate: '',
         endDate: '',
         notes: '',
         completedBy: '',
         completedTime: '',
-        reportTo: ''
+        reportTo: '',
+        expectedOutcome: '',
+        duration: '',
+        attachments: ''
     }).map(row => ({ ...row })));
 
     const [saving, setSaving] = useState(false);
@@ -120,9 +123,9 @@ const MarketingSheet = ({
             product: '', 
             assets: parentTask.assets || parentTask.product || '',
             mediaType: '', marketingChannel: '', mainGoal: '', done: false,
-            description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
+            description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
-            completedTime: '', reportTo: '', _isSubtask: true
+            completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: '', _isSubtask: true
         };
 
         const newTasks = [
@@ -184,6 +187,25 @@ const MarketingSheet = ({
         return { total, completed, inProgress, rate };
     }, [tasks, filterProduct]);
 
+    const filteredLateTasks = useMemo(() => {
+        return tasks.filter(t => {
+            if (!filterProduct) return true;
+            const fpLower = filterProduct.toLowerCase();
+            const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
+            
+            const matchesProduct = (t.assets === filterProduct) || (t.product && t.product.toLowerCase() === fpLower);
+            if (!matchesProduct) return false;
+
+            if (!t.endDate || !t.completedTime) return false;
+            const compDateStr = t.completedTime.split(' ')[0];
+            const end = new Date(t.endDate);
+            const comp = new Date(compDateStr);
+            end.setHours(0,0,0,0);
+            comp.setHours(0,0,0,0);
+            return comp.getTime() > end.getTime();
+        });
+    }, [tasks, filterProduct]);
+
     // Find the product image from the tasks or fallback
     const activeProductImage = useMemo(() => {
         if (!filterProduct) return null;
@@ -203,29 +225,72 @@ const MarketingSheet = ({
         return fallbacks[index];
     }, [tasks, filterProduct]);
 
+    const lateTasks = useMemo(() => {
+        return tasks.filter(t => {
+            if (!t.endDate || !t.completedTime) return false;
+            const compDateStr = t.completedTime.split(' ')[0];
+            const end = new Date(t.endDate);
+            const comp = new Date(compDateStr);
+            end.setHours(0,0,0,0);
+            comp.setHours(0,0,0,0);
+            return comp.getTime() > end.getTime();
+        });
+    }, [tasks]);
+
     const columns = useMemo(() => [
         { key: 'product', label: filterProduct ? 'Campaign / Subtask' : 'Product', icon: <ChevronDown size={14} />, width: filterProduct ? 'w-80' : 'w-40' },
-        { key: 'mediaType', label: 'Media Type', icon: <ChevronDown size={14} />, width: 'w-24' },
-        { key: 'marketingChannel', label: 'Marketing Channel', icon: <ChevronDown size={14} />, width: 'w-40' },
+        { key: 'marketingChannel', label: 'Channel', icon: <ChevronDown size={14} />, width: 'w-40' },
         { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-56' },
-        { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-12' },
-        { key: 'description', label: 'Description', icon: <FileText size={14} />, width: 'w-64' },
-        { key: 'outcome', label: 'Outcome', icon: <Target size={14} />, width: 'w-56' },
-        { key: 'owner', label: 'Owner', icon: <User size={14} />, width: 'w-40' },
-        { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-32' },
-        { key: 'priority', label: 'Priority', icon: <MoreHorizontal size={14} />, width: 'w-28' },
+        { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-20' },
+        { key: 'owner', label: 'Responsibility', icon: <User size={14} />, width: 'w-40' },
+        { key: 'duration', label: 'Duration', icon: <Clock size={14} />, width: 'w-28' },
         { key: 'startDate', label: 'Start Date', icon: <Calendar size={14} />, width: 'w-36' },
         { key: 'endDate', label: 'End Date', icon: <Calendar size={14} />, width: 'w-36' },
+        { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-44' },
+        { key: 'priority', label: 'Priority', icon: <MoreHorizontal size={14} />, width: 'w-28' },
+        { key: 'attachments', label: 'Attachments', icon: <File size={14} />, width: 'w-48' },
         { key: 'notes', label: 'Notes', icon: <FileText size={14} />, width: 'w-64' },
-        { key: 'completedBy', label: 'Completed By', icon: <User size={14} />, width: 'w-40' },
-        { key: 'completedTime', label: 'Completion Time', icon: <Clock size={14} />, width: 'w-40' },
-        { key: 'reportTo', label: 'Report To', icon: <User size={14} />, width: 'w-40' }
+        { key: 'completedTime', label: 'Date Completed', icon: <Clock size={14} />, width: 'w-40' },
+        { key: 'description', label: 'Description', icon: <FileText size={14} />, width: 'w-64' },
+        { key: 'outcome', label: 'Outcome', icon: <Target size={14} />, width: 'w-56' }
     ], [filterProduct]);
 
     const handleInputChange = (index, key, value) => {
         setTasks(prev => {
             const next = [...prev];
-            next[index] = { ...next[index], [key]: value };
+            const updatedTask = { ...next[index] };
+
+            if (key === 'done') {
+                updatedTask.done = value;
+                if (value) {
+                    const now = new Date();
+                    const pad = (num) => String(num).padStart(2, '0');
+                    updatedTask.completedTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                    if (updatedTask.status !== 'published' && updatedTask.status !== 'completed') {
+                        updatedTask.status = 'completed';
+                    }
+                } else {
+                    updatedTask.completedTime = '';
+                    if (updatedTask.status === 'published' || updatedTask.status === 'completed') {
+                        updatedTask.status = 'planning';
+                    }
+                }
+            } else if (key === 'status') {
+                updatedTask.status = value;
+                if (value === 'published' || value === 'completed') {
+                    updatedTask.done = true;
+                    const now = new Date();
+                    const pad = (num) => String(num).padStart(2, '0');
+                    updatedTask.completedTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                } else {
+                    updatedTask.done = false;
+                    updatedTask.completedTime = '';
+                }
+            } else {
+                updatedTask[key] = value;
+            }
+
+            next[index] = updatedTask;
             return next;
         });
     };
@@ -235,9 +300,9 @@ const MarketingSheet = ({
             product: '', 
             assets: filterProduct || '', // Link to parent product
             mediaType: '', marketingChannel: '', mainGoal: '', done: false,
-            description: '', outcome: '', owner: '', status: 'Planned', priority: 'Medium',
+            description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
-            completedTime: '', reportTo: ''
+            completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
         }]);
     };
 
@@ -248,12 +313,14 @@ const MarketingSheet = ({
     };
 
     const getStatusStyles = (status) => {
-        switch (status) {
+        if (!status) return 'bg-slate-200 dark:bg-white/5 text-slate-500 border-transparent';
+        const s = status.toLowerCase();
+        switch (s) {
             case 'planning': return 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/30';
-            case 'developing': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-            case 'under review': return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
-            case 'on hold': return 'bg-rose-500/20 text-rose-300 border-rose-500/30';
-            case 'published': return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+            case 'hold': return 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30';
+            case 'ongoing': return 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30';
+            case 'published': return 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30';
+            case 'completed': return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
             default: return 'bg-slate-200 dark:bg-white/5 text-slate-500 border-transparent';
         }
     };
@@ -327,6 +394,31 @@ const MarketingSheet = ({
                     iconBg="bg-indigo-600"
                     showUsersLink={false}
                 />
+            )}
+            {lateTasks.length > 0 && (
+                <div className="mx-6 mt-4 bg-red-500/10 border border-red-500/30 rounded-2xl overflow-hidden shadow-lg shadow-red-500/5 animate-pulse">
+                    <div className="bg-red-500 text-white px-5 py-2.5 flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
+                        <AlertTriangle size={14} className="shrink-0 animate-bounce" />
+                        <span>Late Task Alert — Expected End Date Exceeded!</span>
+                    </div>
+                    <div className="p-4 space-y-2 max-h-40 overflow-y-auto">
+                        {lateTasks.map((t, idx) => (
+                            <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between text-xs text-red-500 dark:text-red-400 font-bold bg-red-500/5 px-4 py-2.5 rounded-xl border border-red-500/10">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                    <span>Campaign / Subtask:</span>
+                                    <span className="text-slate-900 dark:text-white font-extrabold uppercase">
+                                        {t.product || t.mainGoal || `Task #${idx + 1}`}
+                                    </span>
+                                    <span>completed late!</span>
+                                </div>
+                                <div className="mt-1.5 md:mt-0 font-mono text-[10px] bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 text-red-600 dark:text-red-400">
+                                    Expected: {t.endDate} | Actual: {t.completedTime}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
             {!filterProduct && (
                 <div className="px-4 pt-4 pb-2 flex flex-col gap-4">
@@ -445,6 +537,19 @@ const MarketingSheet = ({
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Pending</p>
                                 <h3 className="text-3xl font-black text-amber-400 leading-none">{filteredStats.inProgress}</h3>
                             </div>
+                            <div className="w-px h-10 bg-white/10" />
+                            <button 
+                                onClick={() => {
+                                    const alertEl = document.getElementById('late-task-alert-banner');
+                                    if (alertEl) {
+                                        alertEl.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                }}
+                                className="text-center cursor-pointer focus:outline-none group/overdue"
+                            >
+                                <p className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] mb-1 group-hover/overdue:text-red-400 transition-colors">Overdue</p>
+                                <h3 className="text-3xl font-black text-red-500 leading-none group-hover/overdue:text-red-400 transition-colors">{filteredLateTasks.length}</h3>
+                            </button>
                         </div>
 
                         <div className="flex-1 w-full max-w-md px-10">
@@ -730,22 +835,22 @@ const MarketingSheet = ({
                                                 ) : col.key === 'status' ? (
                                                     <div className={`rounded-lg border px-2 py-0.5 transition-all ${getStatusStyles(task.status)}`}>
                                                         <select
-                                                            className="w-full bg-transparent border-none focus:ring-0 text-[9px] font-black uppercase tracking-widest cursor-pointer appearance-none outline-none"
+                                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-wider cursor-pointer appearance-none outline-none"
                                                             value={task.status}
                                                             onChange={(e) => handleInputChange(idx, 'status', e.target.value)}
                                                         >
                                                             <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
                                                             <option value="planning" className="bg-white dark:bg-[#0a0f1d]">Planning</option>
-                                                            <option value="developing" className="bg-white dark:bg-[#0a0f1d]">Developing</option>
-                                                            <option value="under review" className="bg-white dark:bg-[#0a0f1d]">Review</option>
-                                                            <option value="on hold" className="bg-white dark:bg-[#0a0f1d]">Hold</option>
+                                                            <option value="hold" className="bg-white dark:bg-[#0a0f1d]">Hold</option>
+                                                            <option value="ongoing" className="bg-white dark:bg-[#0a0f1d]">Ongoing</option>
                                                             <option value="published" className="bg-white dark:bg-[#0a0f1d]">Published</option>
+                                                            <option value="completed" className="bg-white dark:bg-[#0a0f1d]">Completed</option>
                                                         </select>
                                                     </div>
                                                 ) : col.key === 'priority' ? (
                                                     <div className={`rounded-lg border px-2 py-0.5 transition-all ${getPriorityStyles(task.priority)}`}>
                                                         <select
-                                                            className="w-full bg-transparent border-none focus:ring-0 text-[9px] font-black uppercase tracking-widest cursor-pointer appearance-none outline-none"
+                                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-wider cursor-pointer appearance-none outline-none"
                                                             value={task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}
                                                             onChange={(e) => handleInputChange(idx, 'priority', e.target.value)}
                                                         >
@@ -762,6 +867,10 @@ const MarketingSheet = ({
                                                         onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
                                                         className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
                                                     />
+                                                ) : col.key === 'completedTime' ? (
+                                                    <div className="w-full text-center px-1.5 py-2 text-slate-500 dark:text-slate-400 font-mono text-[11px] tracking-tight select-all">
+                                                        {task.completedTime || '—'}
+                                                    </div>
                                                 ) : (
                                                     <AutoResizeTextarea
                                                         value={task[col.key]}
