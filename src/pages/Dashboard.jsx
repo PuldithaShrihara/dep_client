@@ -95,6 +95,19 @@ const Dashboard = () => {
         return departments;
     }, [departments, user]);
 
+    const sortedPlans = useMemo(() => {
+        return [...plans].sort((a, b) => {
+            const yearA = parseInt(a.year, 10) || 0;
+            const yearB = parseInt(b.year, 10) || 0;
+            if (yearA !== yearB) {
+                return yearB - yearA; // Latest year first
+            }
+            const monthA = planMonthToNumber(a.month) || 0;
+            const monthB = planMonthToNumber(b.month) || 0;
+            return monthB - monthA; // Latest month first
+        });
+    }, [plans]);
+
     const calculateCompletionPercentage = (plan, departmentName) => {
         if (departmentName === 'R&D') {
             const mts = getRdMainTasksForPlan(plan);
@@ -482,7 +495,7 @@ const Dashboard = () => {
 
                                 <div className="mt-auto">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                                             Current Progress
                                         </span>
                                         <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">
@@ -513,7 +526,7 @@ const Dashboard = () => {
 
                     <div className={`relative w-full transition-all duration-500 overflow-hidden glass-panel border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col entrance-animation ${isFullScreen
                             ? 'max-w-none h-screen rounded-none'
-                            : 'max-w-4xl max-h-[90vh] rounded-[40px]'
+                            : 'max-w-6xl max-h-[90vh] rounded-[40px]'
                         }`}>
                         {(!activePlan && !showCreateForm) && (
                             <div className="p-8 pb-4 bg-white/40 dark:bg-white/[0.02] border-b border-slate-200/80 dark:border-white/5">
@@ -573,7 +586,7 @@ const Dashboard = () => {
                                         }}
                                         readOnly={!canEditDepartment(user, selectedDept?.name)}
                                         onBack={() => {
-                                            setSearchParams({});
+                                            setSearchParams({ deptId: selectedDept._id });
                                         }}
                                     />
                                 </div>
@@ -588,8 +601,8 @@ const Dashboard = () => {
                                                     setShowCreateForm(false);
                                                     setActiveProductFilter(null);
                                                 } else if (selectedDept?.name !== 'Marketing') {
-                                                    // For non-marketing, go back to departments dashboard
-                                                    setSearchParams({});
+                                                    // For non-marketing, go back to plans list
+                                                    setSearchParams({ deptId: selectedDept._id });
                                                 } else {
                                                     // For Marketing, go back to product drill-down
                                                     setIsEditingSheet(false);
@@ -602,7 +615,7 @@ const Dashboard = () => {
                                                 <ArrowLeft size={16} className="group-hover:text-white transition-colors" />
                                             </div>
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                                                {showCreateForm ? 'Back to Departments' : (selectedDept?.name !== 'Marketing' ? 'Back to Departments' : 'Back to Products')}
+                                                {showCreateForm ? 'Back to Departments' : (selectedDept?.name !== 'Marketing' ? 'Back to Plans' : 'Back to Products')}
                                             </span>
                                         </button>
                                     </div>
@@ -691,23 +704,23 @@ const Dashboard = () => {
                                                 No plans established for this department yet.
                                             </p>
                                         ) : (
-                                            <div className="space-y-4">
-                                                {plans.map(plan => {
+                                            <div className="space-y-3">
+                                                {sortedPlans.map(plan => {
                                                     const completionData = calculateCompletionPercentage(plan, selectedDept?.name);
 
                                                     return (
                                                         <div
                                                             key={plan._id}
                                                             onClick={() => handlePlanCardClick(plan)}
-                                                            className="group p-6 rounded-3xl bg-white/60 border border-slate-200/90 hover:border-indigo-400/50 dark:bg-white/[0.03] dark:border-white/5 dark:hover:border-indigo-500/30 transition-all duration-300 cursor-pointer"
+                                                            className="group p-4 rounded-2xl bg-white/60 border border-slate-200/90 hover:border-indigo-400/50 dark:bg-white/[0.03] dark:border-white/5 dark:hover:border-indigo-500/30 transition-all duration-300 cursor-pointer"
                                                         >
-                                                            <div className="flex justify-between items-start mb-4">
+                                                            <div className="flex justify-between items-start mb-2.5">
                                                                 <div>
-                                                                    <span className="text-[10px] font-black uppercase tracking-tighter text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                                                                    <span className="text-xs font-black uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md">
                                                                         {plan.month} {plan.year}
                                                                     </span>
 
-                                                                    <h5 className="text-lg font-bold text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-300 transition-colors uppercase tracking-tight mt-2">
+                                                                    <h5 className="text-base font-black text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-300 transition-colors uppercase tracking-tight mt-2.5">
                                                                         {plan.title}
                                                                     </h5>
                                                                 </div>
@@ -717,29 +730,29 @@ const Dashboard = () => {
                                                                         type="button"
                                                                         onClick={(e) => handleDeletePlan(plan._id, e)}
                                                                         disabled={deletingPlanId === plan._id}
-                                                                        className="p-2 rounded-xl bg-slate-200/60 text-slate-600 dark:bg-white/5 dark:text-slate-500 hover:bg-red-500/20 hover:text-red-400"
+                                                                        className="p-1.5 rounded-lg bg-slate-200/60 text-slate-600 dark:bg-white/5 dark:text-slate-500 hover:bg-red-500/20 hover:text-red-400"
                                                                     >
-                                                                        <Trash2 size={18} />
+                                                                        <Trash2 size={16} />
                                                                     </button>
                                                                 )}
                                                             </div>
 
-                                                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                                                            <p className="text-slate-600 dark:text-slate-400 text-xs leading-normal mb-2.5">
                                                                 {plan.description || 'No description yet.'}
                                                             </p>
 
                                                             {planHasProgressData(plan, selectedDept?.name) && (
-                                                                <div className="mb-4 p-3 bg-slate-100/90 rounded-2xl border border-slate-200/80 dark:bg-white/[0.02] dark:border-white/5">
+                                                                <div className="p-2 bg-slate-100/90 rounded-xl border border-slate-200/80 dark:bg-white/[0.02] dark:border-white/5">
                                                                     <div className="flex items-center justify-between mb-2">
                                                                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                                                             Progress
                                                                         </span>
-                                                                        <span className="text-xs font-bold text-indigo-400">
+                                                                        <span className="text-[10px] font-black text-indigo-400">
                                                                             {completionData.percentage}%
                                                                         </span>
                                                                     </div>
 
-                                                                    <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-3 overflow-hidden relative">
+                                                                    <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-1.5 overflow-hidden relative">
                                                                         <div
                                                                             className="h-full rounded-full transition-all duration-700 ease-out bg-indigo-500"
                                                                             style={{ width: `${completionData.percentage}%` }}

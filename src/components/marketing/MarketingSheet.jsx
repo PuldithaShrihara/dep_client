@@ -204,7 +204,7 @@ const MarketingSheet = ({
     }, [tasks, filterProduct]);
 
     const columns = useMemo(() => [
-        { key: 'product', label: filterProduct ? 'Campaign Objective / Task' : 'Product', icon: <ChevronDown size={14} />, width: filterProduct ? 'w-80' : 'w-40' },
+        { key: 'product', label: filterProduct ? 'Campaign / Subtask' : 'Product', icon: <ChevronDown size={14} />, width: filterProduct ? 'w-80' : 'w-40' },
         { key: 'mediaType', label: 'Media Type', icon: <ChevronDown size={14} />, width: 'w-24' },
         { key: 'marketingChannel', label: 'Marketing Channel', icon: <ChevronDown size={14} />, width: 'w-40' },
         { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-56' },
@@ -683,13 +683,49 @@ const MarketingSheet = ({
                                                         </div>
                                                     </div>
                                                 ) : col.key === 'done' ? (
-                                                    <div className="flex justify-center">
-                                                        <button 
-                                                            onClick={() => handleInputChange(idx, 'done', !task.done)}
-                                                            className={`p-1.5 rounded-xl transition-all ${task.done ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-slate-600'}`}
-                                                        >
-                                                            {task.done ? <CheckCircle size={16} /> : <Circle size={16} />}
-                                                        </button>
+                                                    <div className="flex justify-center items-center">
+                                                        {!isSubtask && hasSubtasks && !isCompleted ? (
+                                                            <div className="flex flex-col items-center gap-0.5 min-w-[50px]">
+                                                                {(() => {
+                                                                    let totalSub = 0;
+                                                                    let doneSub = 0;
+                                                                    for (let sidx = idx + 1; sidx < tasks.length; sidx++) {
+                                                                        const st = tasks[sidx];
+                                                                        const isSt = !!st._isSubtask || (st.product === '' && (st.mediaType !== '' || st.mainGoal !== ''));
+                                                                        if (!isSt) break;
+                                                                        totalSub++;
+                                                                        if (st.done || (st.status || '').toLowerCase() === 'completed' || (st.status || '').toLowerCase() === 'published') {
+                                                                            doneSub++;
+                                                                        }
+                                                                    }
+                                                                    const pct = totalSub > 0 ? Math.round((doneSub / totalSub) * 100) : 0;
+                                                                    return (
+                                                                        <>
+                                                                            <span className="text-[10px] font-black text-indigo-500 leading-none">{pct}%</span>
+                                                                            <div className="w-10 h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                                                                <div 
+                                                                                    className="h-full bg-indigo-500 transition-all duration-500"
+                                                                                    style={{ width: `${pct}%` }}
+                                                                                ></div>
+                                                                            </div>
+                                                                            <button 
+                                                                                onClick={() => handleInputChange(idx, 'done', true)}
+                                                                                className="text-[8px] text-slate-400 hover:text-emerald-500 font-bold uppercase transition-colors mt-0.5"
+                                                                            >
+                                                                                Force
+                                                                            </button>
+                                                                        </>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={() => handleInputChange(idx, 'done', !task.done)}
+                                                                className={`p-1.5 rounded-xl transition-all ${isCompleted ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                            >
+                                                                {isCompleted ? <CheckCircle size={16} /> : <Circle size={16} />}
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ) : col.key === 'status' ? (
                                                     <div className={`rounded-lg border px-2 py-0.5 transition-all ${getStatusStyles(task.status)}`}>

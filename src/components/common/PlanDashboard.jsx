@@ -218,14 +218,14 @@ const PlanDashboard = ({
                     <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-indigo-600 flex items-center justify-center transition-all">
                         <ArrowLeft size={16} className="group-hover:text-white transition-colors" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Departments</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Plans</span>
                 </button>
 
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <div className="flex items-center gap-3 text-indigo-400 font-black text-[10px] uppercase tracking-[0.2em] mb-2">
+                        <div className="flex items-center gap-3 text-indigo-400 font-black text-sm uppercase tracking-[0.2em] mb-2">
                             <span>{plan.month} {plan.year} Plan</span>
-                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20 text-[9px]">
+                            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20 text-xs">
                                 In Progress
                             </span>
                         </div>
@@ -258,7 +258,7 @@ const PlanDashboard = ({
 
             {/* Content Area */}
             <div className="flex-1 overflow-auto px-8 pb-8 custom-scrollbar">
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <h3 className="text-xl font-black text-white tracking-tight uppercase">Products</h3>
@@ -266,7 +266,7 @@ const PlanDashboard = ({
                         </div>
                     </div>
 
-                    <div className="space-y-16 pb-12">
+                    <div className="space-y-10 pb-8">
                         {[
                             { id: 'fadna', label: 'Fadna', color: 'text-indigo-400' },
                             { id: 'qol', label: 'Quality of Life', color: 'text-emerald-400' },
@@ -284,23 +284,23 @@ const PlanDashboard = ({
 
                             return (
                                 <div key={section.id} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <h3 className={`text-2xl font-black uppercase tracking-[0.3em] ${section.color}`}>
+                                    <div className="flex items-center gap-4 mb-5">
+                                        <h3 className={`text-lg font-black uppercase tracking-[0.25em] ${section.color}`}>
                                             {section.label}
                                         </h3>
                                         <div className="h-px flex-1 bg-white/5 shadow-[0_0_15px_rgba(255,255,255,0.05)]" />
                                     </div>
-                                    <div className="grid grid-cols-1 gap-6">
+                                    <div className="grid grid-cols-1 gap-4">
                                         {sectionProducts.map((product, idx) => (
                                             <div 
                                                 key={product.name}
                                                 onClick={() => onProductClick && onProductClick(product.name)}
-                                                className="group relative flex items-center gap-8 p-6 bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 rounded-[32px] transition-all duration-500 cursor-pointer overflow-hidden shadow-xl"
+                                                className="group relative flex items-center gap-6 p-4 bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 rounded-2xl transition-all duration-500 cursor-pointer overflow-hidden shadow-xl"
                                             >
                                                 {/* Hover Glow Effect */}
                                                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                                 
-                                                <div className="w-24 h-24 rounded-3xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 group-hover:scale-105 transition-transform duration-500 shadow-2xl">
+                                                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 group-hover:scale-105 transition-transform duration-500 shadow-2xl">
                                                     <img 
                                                         src={product.image || '/skincare_product_1_1778561641568.png'} 
                                                         alt={product.name}
@@ -309,17 +309,13 @@ const PlanDashboard = ({
                                                 </div>
 
                                                 <div className="flex-1 min-w-0 relative">
-                                                    <h4 className="text-2xl font-black text-white mb-1 uppercase tracking-tight group-hover:text-indigo-400 transition-colors">
+                                                    <h4 className="text-lg font-black text-white mb-0.5 uppercase tracking-tight group-hover:text-indigo-400 transition-colors">
                                                         {product.name}
                                                     </h4>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Portfolio</span>
-                                                        <div className="w-1 h-1 rounded-full bg-slate-700" />
-                                                        <span className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest">Tracking Progress</span>
-                                                    </div>
+                                                    
                                                 </div>
 
-                                                <div className="flex items-center gap-12 mr-4 relative">
+                                                <div className="flex items-center gap-8 mr-2 relative">
                                                     <div className="text-right min-w-[160px]">
                                                         <div className="flex justify-between items-end mb-2.5 px-1">
                                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Completion</span>
@@ -338,7 +334,7 @@ const PlanDashboard = ({
                                                                 e.stopPropagation();
                                                                 onProductClick && onProductClick(product.name);
                                                             }}
-                                                            className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+                                                            className="px-4.5 py-2 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
                                                         >
                                                             + Campaigns
                                                         </button>
