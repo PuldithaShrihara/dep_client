@@ -3,6 +3,15 @@ import {
     Layout, Package, ListTodo, Target, Clock, Edit3, Trash2, 
     ChevronRight, Plus, TrendingUp, ArrowLeft, BarChart3, X, CheckCircle
 } from 'lucide-react';
+import { API_ORIGIN } from '../../config';
+
+const PRODUCT_IMAGE_API_ORIGIN = API_ORIGIN || 'http://localhost:5000';
+
+const getProductImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${PRODUCT_IMAGE_API_ORIGIN}${imagePath}`;
+};
 
 const PlanDashboard = ({ 
     plan, 
@@ -17,7 +26,7 @@ const PlanDashboard = ({
 }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditPlanModalOpen, setIsEditPlanModalOpen] = useState(false);
-    const [newProductData, setNewProductData] = useState({ name: '', imageFile: null, category: '' });
+    const [newProductData, setNewProductData] = useState({ name: '', description: '', imageFile: null, category: '' });
     const [editPlanData, setEditPlanData] = useState({ title: plan?.title || '', month: plan?.month || '' });
 
     // Group tasks by product to show in the products tab
@@ -46,7 +55,7 @@ const PlanDashboard = ({
                     totalTasks: 0,
                     completedTasks: 0,
                     overdueTasks: 0,
-                    image: p.image || null
+                    image: p.image || p.imageUrl || null
                 };
             });
         }
@@ -64,7 +73,7 @@ const PlanDashboard = ({
                         totalTasks: 0,
                         completedTasks: 0,
                         overdueTasks: 0,
-                        image: task.productImage || null
+                        image: null
                     };
                 }
                 
@@ -114,13 +123,18 @@ const PlanDashboard = ({
     const handleAddSubmit = (e) => {
         e.preventDefault();
         if (newProductData.name && onAddProduct) {
+            if (!newProductData.imageFile) {
+                alert('Please upload a product image.');
+                return;
+            }
+
             onAddProduct(
                 newProductData.name,
                 newProductData.imageFile,
-                '',
+                newProductData.description,
                 newProductData.category
             );
-            setNewProductData({ name: '', imageFile: null, category: '' });
+            setNewProductData({ name: '', description: '', imageFile: null, category: '' });
             setIsAddModalOpen(false);
         }
     };
@@ -222,10 +236,21 @@ const PlanDashboard = ({
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Product Image (PNG)</label>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Description (optional)</label>
+                                <textarea
+                                    value={newProductData.description}
+                                    onChange={(e) => setNewProductData({ ...newProductData, description: e.target.value })}
+                                    rows={3}
+                                    placeholder="Product description..."
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-all font-bold resize-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Product Image</label>
                                 <input
                                     type="file"
-                                    accept="image/png"
+                                    accept="image/*"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0] || null;
                                         setNewProductData({ ...newProductData, imageFile: file });
@@ -367,11 +392,17 @@ const PlanDashboard = ({
                                                 )}
                                                 
                                                 <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 group-hover:scale-105 transition-transform duration-500 shadow-2xl">
-                                                    <img 
-                                                        src={product.image || '/skincare_product_1_1778561641568.png'} 
-                                                        alt={product.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                    {getProductImageUrl(product.image) ? (
+                                                        <img 
+                                                            src={getProductImageUrl(product.image)} 
+                                                            alt={product.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center bg-indigo-500/10 text-indigo-300">
+                                                            <Package size={28} />
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex-1 min-w-0 relative">

@@ -9,6 +9,14 @@ import { API_ORIGIN } from '../../config';
 import Header from '../common/Header';
 import { TrendingUp } from 'lucide-react';
 
+const PRODUCT_IMAGE_API_ORIGIN = API_ORIGIN || 'http://localhost:5000';
+
+const getProductImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${PRODUCT_IMAGE_API_ORIGIN}${imagePath}`;
+};
+
 const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     const textareaRef = React.useRef(null);
 
@@ -291,32 +299,18 @@ const MarketingSheet = ({
         return tasks.filter(isOverdueNotCompletedInActivePlan);
     }, [tasks, isOverdueNotCompletedInActivePlan]);
 
-    // Find the product image from the tasks or fallback
+    // Find the product image from the uploaded plan products only.
     const activeProductImage = useMemo(() => {
         if (!filterProduct) return null;
         
-        // 1. Look inside the dedicated plan products definition first!
         if (initialProducts && initialProducts.length > 0) {
             const prod = initialProducts.find(p => p.name.toLowerCase() === filterProduct.toLowerCase());
-            if (prod && prod.image) return prod.image;
+            const imagePath = prod?.image || prod?.imageUrl;
+            if (imagePath) return getProductImageUrl(imagePath);
         }
-
-        // 2. Fallback to task-level productImage if present
-        const taskWithImage = tasks.find(t => 
-            ((t.assets === filterProduct) || (t.product && t.product.toLowerCase() === filterProduct.toLowerCase())) && t.productImage
-        );
         
-        if (taskWithImage?.productImage) return taskWithImage.productImage;
-        
-        // 3. Fallback to standard assets if not found
-        const fallbacks = [
-            '/skincare_product_1_1778561641568.png',
-            '/skincare_product_2_1778561675994.png',
-            '/skincare_product_3_1778561699216.png'
-        ];
-        const index = filterProduct.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % fallbacks.length;
-        return fallbacks[index];
-    }, [tasks, filterProduct, initialProducts]);
+        return null;
+    }, [filterProduct, initialProducts]);
 
     const overdueTasks = useMemo(() => {
         return tasks.filter(isOverdueNotCompleted);

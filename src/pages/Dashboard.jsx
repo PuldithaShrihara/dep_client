@@ -228,21 +228,21 @@ const Dashboard = () => {
         return overdueCount;
     };
 
+    const fetchDepartments = async () => {
+        try {
+            const token = localStorage.getItem('token');
+
+            const res = await axios.get(`${API_ORIGIN}/api/departments`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setDepartments(res.data);
+        } catch (err) {
+            console.error('Error fetching departments:', err.response?.data || err.message);
+        }
+    };
+
     useEffect(() => {
-        const fetchDepartments = async () => {
-            try {
-                const token = localStorage.getItem('token');
-
-                const res = await axios.get(`${API_ORIGIN}/api/departments`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                setDepartments(res.data);
-            } catch (err) {
-                console.error('Error fetching departments:', err.response?.data || err.message);
-            }
-        };
-
         fetchDepartments();
     }, []);
 
@@ -347,6 +347,7 @@ const Dashboard = () => {
             });
 
             setPlans([res.data, ...plans]);
+            fetchDepartments();
 
             setNewPlan({
                 month: '',
@@ -417,6 +418,7 @@ const Dashboard = () => {
             });
 
             setPlans(plans.filter(p => p._id !== planId));
+            fetchDepartments();
             toast.success('Plan deleted successfully', { id: toastId });
         } catch (err) {
             console.error('Error deleting plan:', err.response?.data || err.message);
@@ -429,6 +431,10 @@ const Dashboard = () => {
     const handleAddProduct = async (productName, productImageFile, description = '', category = '') => {
         if (!activePlan?._id) {
             toast.error('Please create or select a plan before adding products.');
+            return;
+        }
+        if (!productImageFile) {
+            toast.error('Please upload a product image.');
             return;
         }
 
@@ -457,6 +463,7 @@ const Dashboard = () => {
                 name: createdProduct.name,
                 description: createdProduct.description,
                 image: createdProduct.image,
+                imageUrl: createdProduct.imageUrl,
                 category: createdProduct.category
             };
             const updatedPlan = {
@@ -573,9 +580,12 @@ const Dashboard = () => {
                                 </p>
 
                                 <div className="mt-auto">
-                                    <div className="flex items-center mb-2">
+                                    <div className="flex items-center justify-between mb-2">
                                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                                             Current Progress
+                                        </span>
+                                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">
+                                            {dept.completionPercent || 0}%
                                         </span>
                                     </div>
 
@@ -721,6 +731,7 @@ const Dashboard = () => {
                                             readOnly={!canEditDepartment(user, selectedDept?.name)}
                                             onSuccess={(updatedPlan) => {
                                                 fetchPlans(selectedDept._id);
+                                                fetchDepartments();
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
                                                 if (activeProductFilter) {
@@ -746,6 +757,7 @@ const Dashboard = () => {
                                             readOnly={!canEditDepartment(user, selectedDept?.name)}
                                             onSuccess={(updatedPlan) => {
                                                 fetchPlans(selectedDept._id);
+                                                fetchDepartments();
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
                                                 setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
@@ -766,6 +778,7 @@ const Dashboard = () => {
                                             readOnly={!canEditDepartment(user, selectedDept?.name)}
                                             onSuccess={(updatedPlan) => {
                                                 fetchPlans(selectedDept._id);
+                                                fetchDepartments();
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
                                                 setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
