@@ -76,8 +76,6 @@ const Dashboard = () => {
     const [loadingPlans, setLoadingPlans] = useState(!!initialDeptId);
     const [isEditingSheet, setIsEditingSheet] = useState(false);
     const [activeProductFilter, setActiveProductFilter] = useState(null);
-    const [globalProducts, setGlobalProducts] = useState([]);
-    const [selectedProductIds, setSelectedProductIds] = useState([]);
 
     const [newPlan, setNewPlan] = useState({
         month: '',
@@ -246,7 +244,6 @@ const Dashboard = () => {
         };
 
         fetchDepartments();
-        fetchProducts();
     }, []);
 
     const fetchPlans = async (deptId) => {
@@ -264,18 +261,6 @@ const Dashboard = () => {
             console.error('Error fetching plans:', err.response?.data || err.message);
         } finally {
             setLoadingPlans(false);
-        }
-    };
-
-    const fetchProducts = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`${API_ORIGIN}/api/products`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setGlobalProducts(res.data);
-        } catch (err) {
-            console.error('Error fetching products:', err.response?.data || err.message);
         }
     };
 
@@ -306,10 +291,6 @@ const Dashboard = () => {
             setShowCreateForm(false);
         }
     }, [searchParams, departments, user]);
-
-    useEffect(() => {
-        setSelectedProductIds([]);
-    }, [selectedDept?._id]);
 
     useEffect(() => {
         const planId = searchParams.get('planId');
@@ -360,8 +341,7 @@ const Dashboard = () => {
 
             const res = await axios.post(`${API_ORIGIN}/api/plans`, {
                 ...newPlan,
-                department: selectedDept._id,
-                productIds: selectedProductIds
+                department: selectedDept._id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -375,7 +355,6 @@ const Dashboard = () => {
                 description: '',
                 target: ''
             });
-            setSelectedProductIds([]);
 
             setShowCreateForm(false);
             
@@ -396,14 +375,6 @@ const Dashboard = () => {
         } finally {
             setCreatingPlan(false);
         }
-    };
-
-    const toggleProductSelection = (productId) => {
-        setSelectedProductIds(prev =>
-            prev.includes(productId)
-                ? prev.filter(id => id !== productId)
-                : [...prev, productId]
-        );
     };
 
     const handlePlanCardClick = (plan) => {
@@ -456,7 +427,10 @@ const Dashboard = () => {
     };
 
     const handleAddProduct = async (productName, productImageFile, description = '', category = '') => {
-        if (!activePlan) return;
+        if (!activePlan?._id) {
+            toast.error('Please create or select a plan before adding products.');
+            return;
+        }
 
         const toastId = toast.loading('Adding product...', { id: 'add-product' });
         try {
@@ -465,6 +439,8 @@ const Dashboard = () => {
             formData.append('name', productName);
             formData.append('description', description);
             formData.append('category', category);
+            formData.append('planId', activePlan._id);
+            formData.append('departmentId', selectedDept?._id || activePlan.department || '');
             if (productImageFile) {
                 formData.append('image', productImageFile);
             }
@@ -476,19 +452,20 @@ const Dashboard = () => {
             });
 
             const createdProduct = productRes.data;
-            setGlobalProducts(prev => [createdProduct, ...prev.filter((p) => p._id !== createdProduct._id)]);
+            const productEntry = {
+                productId: createdProduct._id,
+                name: createdProduct.name,
+                description: createdProduct.description,
+                image: createdProduct.image,
+                category: createdProduct.category
+            };
+            const updatedPlan = {
+                ...activePlan,
+                products: [...(activePlan.products || []), productEntry]
+            };
 
-            try {
-                const planRes = await axios.post(`${API_ORIGIN}/api/plans/${activePlan._id}/products`, {
-                    productId: createdProduct._id
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setActivePlan(planRes.data);
-                setPlans(plans.map(p => p._id === planRes.data._id ? planRes.data : p));
-            } catch (planErr) {
-                console.warn('Global product created but failed to add to current plan:', planErr.response?.data || planErr.message);
-            }
+            setActivePlan(updatedPlan);
+            setPlans(plans.map(p => p._id === updatedPlan._id ? updatedPlan : p));
 
             toast.success('Product added successfully', { id: toastId });
         } catch (err) {
@@ -944,37 +921,6 @@ const Dashboard = () => {
                                                             <option key={m} value={m}>{m}</option>
                                                         ))}
                                                     </select>
-                                                </div>
-
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Select Products</label>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{selectedProductIds.length} selected</span>
-                                                    </div>
-                                                    <div className="grid gap-3 max-h-56 overflow-auto p-3 bg-slate-900/80 border border-slate-200/10 rounded-3xl">
-                                                        {globalProducts.length > 0 ? (
-                                                            globalProducts.map((product) => {
-                                                                const checked = selectedProductIds.includes(product._id);
-                                                                return (
-                                                                    <button
-                                                                        key={product._id}
-                                                                        type="button"
-                                                                        onClick={() => toggleProductSelection(product._id)}
-                                                                        className={`w-full text-left rounded-2xl p-3 transition-all border ${checked ? 'border-indigo-500 bg-indigo-500/10' : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}`}>
-                                                                        <div className="flex items-center justify-between gap-4">
-                                                                            <div>
-                                                                                <p className="text-sm font-black text-white">{product.name}</p>
-                                                                                {product.category && <p className="text-[11px] text-slate-400 mt-1">{product.category}</p>}
-                                                                            </div>
-                                                                            <div className={`h-4 w-4 rounded-full border ${checked ? 'border-indigo-400 bg-indigo-500' : 'border-slate-500 bg-transparent'}`} />
-                                                                        </div>
-                                                                    </button>
-                                                                );
-                                                            })
-                                                        ) : (
-                                                            <p className="text-[11px] text-slate-400 uppercase tracking-widest">No global products yet. Create a product from the plan dashboard first.</p>
-                                                        )}
-                                                    </div>
                                                 </div>
 
                                                 <button
