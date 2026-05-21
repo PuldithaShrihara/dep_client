@@ -49,7 +49,8 @@ const PlanDashboard = ({
         // 1. Initialize from dedicated products array (if it exists)
         if (plan.products && plan.products.length > 0) {
             plan.products.forEach(p => {
-                productMap[p.name] = {
+                const key = String(p.name).trim().toLowerCase();
+                productMap[key] = {
                     name: p.name,
                     category: p.category || 'Campaign',
                     totalTasks: 0,
@@ -64,10 +65,12 @@ const PlanDashboard = ({
         if (plan.tasks) {
             plan.tasks.forEach(task => {
                 const productName = task.assets || task.product;
-                if (!productName || !productName.trim()) return; // Ignore blank placeholder rows
+                if (!productName || !String(productName).trim()) return; // Ignore blank placeholder rows
 
-                if (!productMap[productName]) {
-                    productMap[productName] = {
+                const key = String(productName).trim().toLowerCase();
+
+                if (!productMap[key]) {
+                    productMap[key] = {
                         name: productName,
                         category: task.mediaType || 'Marketing',
                         totalTasks: 0,
@@ -77,8 +80,8 @@ const PlanDashboard = ({
                     };
                 }
                 
-                if (!productMap[productName].overdueTasks) {
-                    productMap[productName].overdueTasks = 0;
+                if (!productMap[key].overdueTasks) {
+                    productMap[key].overdueTasks = 0;
                 }
 
                 const status = (task.status || '').toLowerCase();
@@ -97,16 +100,16 @@ const PlanDashboard = ({
                 })();
 
                 if (isTaskOverdue) {
-                    productMap[productName].overdueTasks += 1;
+                    productMap[key].overdueTasks += 1;
                 }
 
                 // Ignore subtasks for high-level product progress bar ratio
                 const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
                 if (isSubtask) return; 
                 
-                productMap[productName].totalTasks += 1;
+                productMap[key].totalTasks += 1;
                 if (isComp) {
-                    productMap[productName].completedTasks += 1;
+                    productMap[key].completedTasks += 1;
                 }
             });
         }

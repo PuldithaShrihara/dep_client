@@ -168,8 +168,8 @@ const Dashboard = () => {
             if (plan.products && plan.products.length > 0) {
                 plan.products.forEach(p => {
                     const pName = typeof p === 'string' ? p : p.name;
-                    if (pName) {
-                        productMap[pName] = { total: 0, completed: 0 };
+                    if (pName && String(pName).trim()) {
+                        productMap[String(pName).trim().toLowerCase()] = { total: 0, completed: 0, originalName: pName };
                     }
                 });
             }
@@ -182,15 +182,16 @@ const Dashboard = () => {
                     const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
                     if (isSubtask) return;
 
-                    if (!productMap[productName]) {
-                        productMap[productName] = { total: 0, completed: 0 };
+                    const key = String(productName).trim().toLowerCase();
+                    if (!productMap[key]) {
+                        productMap[key] = { total: 0, completed: 0, originalName: productName };
                     }
 
-                    productMap[productName].total += 1;
+                    productMap[key].total += 1;
                     
                     const status = (task.status || '').toLowerCase();
                     if (task.done || status === 'completed' || status === 'published') {
-                        productMap[productName].completed += 1;
+                        productMap[key].completed += 1;
                     }
                 });
             }

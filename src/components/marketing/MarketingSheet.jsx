@@ -304,7 +304,9 @@ const MarketingSheet = ({
         if (!filterProduct) return null;
         
         if (initialProducts && initialProducts.length > 0) {
-            const prod = initialProducts.find(p => p.name.toLowerCase() === filterProduct.toLowerCase());
+            // Use findLast or reverse to match PlanDashboard's behavior of the last product overwriting previous duplicates
+            const matches = initialProducts.filter(p => p.name && String(p.name).trim().toLowerCase() === String(filterProduct).trim().toLowerCase());
+            const prod = matches.length > 0 ? matches[matches.length - 1] : null;
             const imagePath = prod?.image || prod?.imageUrl;
             if (imagePath) return getProductImageUrl(imagePath);
         }
