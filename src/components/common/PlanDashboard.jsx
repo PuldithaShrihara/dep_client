@@ -17,7 +17,7 @@ const PlanDashboard = ({
 }) => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditPlanModalOpen, setIsEditPlanModalOpen] = useState(false);
-    const [newProductData, setNewProductData] = useState({ name: '', image: '' });
+    const [newProductData, setNewProductData] = useState({ name: '', imageFile: null, category: '' });
     const [editPlanData, setEditPlanData] = useState({ title: plan?.title || '', month: plan?.month || '' });
 
     // Group tasks by product to show in the products tab
@@ -75,24 +75,16 @@ const PlanDashboard = ({
                 const status = (task.status || '').toLowerCase();
                 const isComp = task.done || status === 'completed' || status === 'published';
 
-                // Check if this task is overdue
+                // Product-level alert count only includes unfinished overdue tasks.
                 const isTaskOverdue = (() => {
                     if (!task.endDate) return false;
                     const endDate = new Date(task.endDate);
                     if (isNaN(endDate.getTime())) return false;
-                    endDate.setHours(0, 0, 0, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    if (isComp) return false;
 
-                    if (isComp) {
-                        if (!task.completedTime) return false;
-                        const compDate = new Date(task.completedTime);
-                        if (isNaN(compDate.getTime())) return false;
-                        compDate.setHours(0, 0, 0, 0);
-                        return compDate.getTime() > endDate.getTime();
-                    } else {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        return today.getTime() > endDate.getTime();
-                    }
+                    const today = new Date();
+                    return today.getTime() > endDate.getTime();
                 })();
 
                 if (isTaskOverdue) {
@@ -122,8 +114,13 @@ const PlanDashboard = ({
     const handleAddSubmit = (e) => {
         e.preventDefault();
         if (newProductData.name && onAddProduct) {
-            onAddProduct(newProductData.name, newProductData.image);
-            setNewProductData({ name: '', image: '' });
+            onAddProduct(
+                newProductData.name,
+                newProductData.imageFile,
+                '',
+                newProductData.category
+            );
+            setNewProductData({ name: '', imageFile: null, category: '' });
             setIsAddModalOpen(false);
         }
     };
@@ -196,7 +193,7 @@ const PlanDashboard = ({
                                 <X size={24} />
                             </button>
                         </div>
-                        <form onSubmit={handleAddSubmit} className="space-y-6">
+                        <form onSubmit={handleAddSubmit} className="space-y-6 max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
                             <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Product Name</label>
                                 <input 
@@ -209,39 +206,32 @@ const PlanDashboard = ({
                                     required
                                 />
                             </div>
-                            
+
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Select Product Image</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {[
-                                        '/skincare_product_1_1778561641568.png',
-                                        '/skincare_product_2_1778561675994.png',
-                                        '/skincare_product_3_1778561699216.png',
-                                        '/skincare_product_1_1778561641568.png', 
-                                        '/skincare_product_2_1778561675994.png',
-                                        '/skincare_product_3_1778561699216.png'
-                                    ].map((img, i) => (
-                                        <button
-                                            key={i}
-                                            type="button"
-                                            onClick={() => setNewProductData({...newProductData, image: img})}
-                                            className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                                                newProductData.image === img 
-                                                ? 'border-indigo-500 scale-95 shadow-lg shadow-indigo-500/20' 
-                                                : 'border-white/10 hover:border-white/30'
-                                            }`}
-                                        >
-                                            <img src={img} alt="Option" className="w-full h-full object-cover" />
-                                            {newProductData.image === img && (
-                                                <div className="absolute inset-0 bg-indigo-600/20 flex items-center justify-center">
-                                                    <div className="bg-indigo-600 rounded-full p-1 shadow-lg">
-                                                        <CheckCircle size={14} className="text-white" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Category (optional)</label>
+                                <select
+                                    value={newProductData.category}
+                                    onChange={(e) => setNewProductData({ ...newProductData, category: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-indigo-500 transition-all font-bold cursor-pointer"
+                                >
+                                    <option value="" className="bg-slate-900 text-slate-200">Select a category...</option>
+                                    <option value="Fadna" className="bg-slate-900 text-slate-200">Fadna</option>
+                                    <option value="Quality of Life" className="bg-slate-900 text-slate-200">Quality of Life</option>
+                                    <option value="Life Science" className="bg-slate-900 text-slate-200">Life Science</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Product Image (PNG)</label>
+                                <input
+                                    type="file"
+                                    accept="image/png"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setNewProductData({ ...newProductData, imageFile: file });
+                                    }}
+                                    className="w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-indigo-600 file:text-white bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-indigo-500 transition-all"
+                                />
                             </div>
 
                             <button 
@@ -310,6 +300,15 @@ const PlanDashboard = ({
                             <h3 className="text-xl font-black text-white tracking-tight uppercase">Products</h3>
                             <p className="text-slate-500 text-xs font-bold tracking-tight">Analyze progress of each segment under this plan</p>
                         </div>
+                        {!readOnly && (
+                            <button
+                                type="button"
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20"
+                            >
+                                <Plus size={14} /> Add Product
+                            </button>
+                        )}
                     </div>
 
                     <div className="space-y-10 pb-8">
@@ -353,6 +352,19 @@ const PlanDashboard = ({
                                                     ? 'from-red-500/0 via-red-500/0 to-red-500/5'
                                                     : 'from-indigo-500/0 via-indigo-500/0 to-indigo-500/5'
                                                 }`} />
+                                                {!readOnly && onDeleteProduct && (
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Delete ${product.name}`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDeleteProduct(product.name);
+                                                        }}
+                                                        className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-slate-500 opacity-0 transition-all hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
                                                 
                                                 <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 group-hover:scale-105 transition-transform duration-500 shadow-2xl">
                                                     <img 

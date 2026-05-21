@@ -48,6 +48,61 @@ const getTodayDateStr = () => {
     return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 };
 
+const formatDateTimeValue = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
+const formatDateValue = (value) => normalizeDate(value) || '';
+
+const getCompletionDateValue = (task) => task.dateCompleted || task.completedTime || '';
+
+const isTaskCompleted = (task) => {
+    const status = (task.status || '').toLowerCase();
+    return status === 'completed' || (task.done === true && !status);
+};
+
+const getEndOfExpectedDay = (value) => {
+    if (!value) return null;
+    const date = new Date(normalizeDate(value));
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(23, 59, 59, 999);
+    return date;
+};
+
+const isOverdueNotCompleted = (task) => {
+    const endDate = getEndOfExpectedDay(task.endDate);
+    if (!endDate || isTaskCompleted(task)) return false;
+
+    const today = new Date();
+    return today.getTime() > endDate.getTime();
+};
+
+const isCompletedLate = (task) => {
+    if (!isTaskCompleted(task)) return false;
+
+    const endDate = getEndOfExpectedDay(task.endDate);
+    const completedValue = getCompletionDateValue(task);
+    if (!endDate || !completedValue) return false;
+
+    const completedDate = new Date(completedValue);
+    if (Number.isNaN(completedDate.getTime())) return false;
+
+    return completedDate.getTime() > endDate.getTime();
+};
+
+const getTaskDisplayName = (task, fallback = 'Task') => (
+    task.product ||
+    task.mediaType ||
+    task.mainGoal ||
+    task.description ||
+    task.assets ||
+    fallback
+);
+
 const MarketingSheet = ({ 
     planId, 
     initialTasks = [], 
@@ -207,32 +262,14 @@ const MarketingSheet = ({
         return normalizeProductName(task.assets) === activeProduct || normalizeProductName(task.product) === activeProduct;
     }, [filterProduct]);
 
-    const isCompletedLateInActivePlan = useCallback((task) => {
+    const isOverdueNotCompletedInActivePlan = useCallback((task) => {
         if (!taskMatchesActiveProduct(task)) return false;
-        if (!task.endDate) return false;
-
-        const isComp = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
-        
-        const endDate = new Date(task.endDate);
-        if (isNaN(endDate.getTime())) return false;
-        endDate.setHours(0, 0, 0, 0);
-
-        if (isComp) {
-            if (!task.completedTime) return false;
-            const compDate = new Date(task.completedTime);
-            if (isNaN(compDate.getTime())) return false;
-            compDate.setHours(0, 0, 0, 0);
-            return compDate.getTime() > endDate.getTime();
-        } else {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            return today.getTime() > endDate.getTime();
-        }
+        return isOverdueNotCompleted(task);
     }, [taskMatchesActiveProduct]);
 
-    const filteredLateTasks = useMemo(() => {
-        return tasks.filter(isCompletedLateInActivePlan);
-    }, [tasks, isCompletedLateInActivePlan]);
+    const filteredOverdueTasks = useMemo(() => {
+        return tasks.filter(isOverdueNotCompletedInActivePlan);
+    }, [tasks, isOverdueNotCompletedInActivePlan]);
 
     // Find the product image from the tasks or fallback
     const activeProductImage = useMemo(() => {
@@ -261,26 +298,8 @@ const MarketingSheet = ({
         return fallbacks[index];
     }, [tasks, filterProduct, initialProducts]);
 
-    const lateTasks = useMemo(() => {
-        return tasks.filter(t => {
-            if (!t.endDate) return false;
-            const endDate = new Date(t.endDate);
-            if (isNaN(endDate.getTime())) return false;
-            endDate.setHours(0, 0, 0, 0);
-
-            const isComp = t.done || (t.status || '').toLowerCase() === 'completed' || (t.status || '').toLowerCase() === 'published';
-            if (isComp) {
-                if (!t.completedTime) return false;
-                const compDate = new Date(t.completedTime);
-                if (isNaN(compDate.getTime())) return false;
-                compDate.setHours(0, 0, 0, 0);
-                return compDate.getTime() > endDate.getTime();
-            } else {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return today.getTime() > endDate.getTime();
-            }
-        });
+    const overdueTasks = useMemo(() => {
+        return tasks.filter(isOverdueNotCompleted);
     }, [tasks]);
 
     const columns = useMemo(() => [
@@ -310,10 +329,11 @@ const MarketingSheet = ({
                 updatedTask.done = value;
                 if (value) {
                     const now = new Date();
-                    const pad = (num) => String(num).padStart(2, '0');
-                    updatedTask.completedTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                    updatedTask.dateCompleted = now.toISOString();
+                    updatedTask.completedTime = formatDateTimeValue(now);
                     updatedTask.status = 'completed';
                 } else {
+                    updatedTask.dateCompleted = null;
                     updatedTask.completedTime = '';
                     if (updatedTask.status === 'published' || updatedTask.status === 'completed') {
                         updatedTask.status = 'planning';
@@ -324,10 +344,11 @@ const MarketingSheet = ({
                 if (value === 'published' || value === 'completed') {
                     updatedTask.done = true;
                     const now = new Date();
-                    const pad = (num) => String(num).padStart(2, '0');
-                    updatedTask.completedTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                    updatedTask.dateCompleted = now.toISOString();
+                    updatedTask.completedTime = formatDateTimeValue(now);
                 } else {
                     updatedTask.done = false;
+                    updatedTask.dateCompleted = null;
                     updatedTask.completedTime = '';
                 }
             } else {
@@ -439,25 +460,25 @@ const MarketingSheet = ({
                     showUsersLink={false}
                 />
             )}
-            {(filterProduct ? filteredLateTasks : lateTasks).length > 0 && (
-                <div className="mx-6 mt-4 bg-red-500/10 border border-red-500/30 rounded-2xl overflow-hidden shadow-lg shadow-red-500/5 animate-pulse">
+            {(filterProduct ? filteredOverdueTasks : overdueTasks).length > 0 && (
+                <div id="late-task-alert-banner" className="mx-6 mt-4 bg-red-500/10 border border-red-500/30 rounded-2xl overflow-hidden shadow-lg shadow-red-500/5 animate-pulse">
                     <div className="bg-red-500 text-white px-5 py-2.5 flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
                         <AlertTriangle size={14} className="shrink-0 animate-bounce" />
-                        <span>Late Task Alert — Expected End Date Exceeded!</span>
+                        <span>Late Task Alert - Expected End Date Exceeded!</span>
                     </div>
                     <div className="p-4 space-y-2 max-h-40 overflow-y-auto">
-                        {(filterProduct ? filteredLateTasks : lateTasks).map((t, idx) => (
+                        {(filterProduct ? filteredOverdueTasks : overdueTasks).map((t, idx) => (
                             <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between text-xs text-red-500 dark:text-red-400 font-bold bg-red-500/5 px-4 py-2.5 rounded-xl border border-red-500/10">
                                 <div className="flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                                     <span>Campaign / Subtask:</span>
                                     <span className="text-slate-900 dark:text-white font-extrabold uppercase">
-                                        {t.product || t.mainGoal || `Task #${idx + 1}`}
+                                        {getTaskDisplayName(t, `Task #${idx + 1}`)}
                                     </span>
-                                    <span>completed late!</span>
+                                    <span>is not completed!</span>
                                 </div>
                                 <div className="mt-1.5 md:mt-0 font-mono text-[10px] bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 text-red-600 dark:text-red-400">
-                                    Expected: {t.endDate} | Actual: {t.completedTime}
+                                    Expected: {formatDateValue(t.endDate)}
                                 </div>
                             </div>
                         ))}
@@ -599,7 +620,7 @@ const MarketingSheet = ({
                                         style={{ left: `calc(${filteredStats.rate}% - 20px)` }}
                                     />
                                 </div>
-                                {filteredLateTasks.length > 0 && (
+                                {filteredOverdueTasks.length > 0 && (
                                     <button 
                                         onClick={() => {
                                             const alertEl = document.getElementById('late-task-alert-banner');
@@ -611,7 +632,7 @@ const MarketingSheet = ({
                                     >
                                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                                         <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.1em] group-hover/overdue:text-red-400 transition-colors mt-[1px]">Overdue</p>
-                                        <h3 className="text-xl font-black text-red-500 leading-none group-hover/overdue:text-red-400 transition-colors">{filteredLateTasks.length}</h3>
+                                        <h3 className="text-xl font-black text-red-500 leading-none group-hover/overdue:text-red-400 transition-colors">{filteredOverdueTasks.length}</h3>
                                     </button>
                                 )}
                             </div>
@@ -769,8 +790,8 @@ const MarketingSheet = ({
 
                             return displayTasks.map(({ task, originalIndex, isSubtask, displayNumber, mainCounter, hasSubtasks, parentCompleted }) => {
                                 const idx = originalIndex;
-                                const isTaskCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
-                                const isCompleted = isTaskCompleted || parentCompleted;
+                                const isRowTaskCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+                                const isCompleted = isRowTaskCompleted || parentCompleted;
                                 
                                 if (!filterProduct) {
                                     if (filterChannel !== 'All Channels' && task.marketingChannel !== filterChannel) return null;
@@ -827,7 +848,7 @@ const MarketingSheet = ({
                                                             {!isSubtask && (task.product?.trim() || task.mainGoal?.trim()) && (
                                                                 <button
                                                                     onClick={() => handleAddSubtask(idx)}
-                                                                    className="absolute -right-2 top-1/2 -translate-y-1/2 w-5 h-5 bg-[#d97706] hover:bg-[#b45309] text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover/input:opacity-100 shadow-lg shadow-orange-500/20 z-10"
+                                                                    className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 bg-[#d97706] hover:bg-[#b45309] text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover/input:opacity-100 shadow-lg shadow-orange-500/20 z-10"
                                                                     title="Add Subtask"
                                                                 >
                                                                     <Plus size={12} strokeWidth={4} />
@@ -916,8 +937,16 @@ const MarketingSheet = ({
                                                         className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
                                                     />
                                                 ) : col.key === 'completedTime' ? (
-                                                    <div className="w-full text-center px-1.5 py-2 text-slate-500 dark:text-slate-400 font-mono text-[11px] tracking-tight select-all">
-                                                        {task.completedTime || '—'}
+                                                    <div className={`w-full text-center px-1.5 py-2 font-mono text-[11px] tracking-tight select-all ${isCompletedLate(task) ? 'text-red-500 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                        {isTaskCompleted(task) && getCompletionDateValue(task) ? (
+                                                            isCompletedLate(task) ? (
+                                                                <>Expected: {formatDateValue(task.endDate)} | Actual: {formatDateTimeValue(getCompletionDateValue(task))}</>
+                                                            ) : (
+                                                                formatDateTimeValue(getCompletionDateValue(task))
+                                                            )
+                                                        ) : (
+                                                            '-'
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <AutoResizeTextarea
