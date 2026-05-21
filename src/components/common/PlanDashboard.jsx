@@ -236,17 +236,6 @@ const PlanDashboard = ({
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Description (optional)</label>
-                                <textarea
-                                    value={newProductData.description}
-                                    onChange={(e) => setNewProductData({ ...newProductData, description: e.target.value })}
-                                    rows={3}
-                                    placeholder="Product description..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-all font-bold resize-none"
-                                />
-                            </div>
-
-                            <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Product Image</label>
                                 <input
                                     type="file"
@@ -367,14 +356,14 @@ const PlanDashboard = ({
                                                 onClick={() => onProductClick && onProductClick(product.name)}
                                                 className={`group relative flex items-center gap-6 p-4 rounded-2xl transition-all duration-500 cursor-pointer overflow-hidden shadow-xl ${
                                                     product.overdueTasks > 0
-                                                    ? 'bg-red-500/[0.01] border border-red-500/30 hover:border-red-500/50 shadow-lg shadow-red-950/10'
+                                                    ? 'bg-red-950/30 border border-red-500/60 hover:border-red-400 hover:bg-red-950/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
                                                     : 'bg-white/[0.02] border border-white/5 hover:border-indigo-500/30'
                                                 }`}
                                             >
                                                 {/* Hover Glow Effect */}
                                                 <div className={`absolute inset-0 bg-gradient-to-r transition-opacity duration-500 opacity-0 group-hover:opacity-100 ${
                                                     product.overdueTasks > 0
-                                                    ? 'from-red-500/0 via-red-500/0 to-red-500/5'
+                                                    ? 'from-red-500/0 via-red-500/5 to-red-500/10'
                                                     : 'from-indigo-500/0 via-indigo-500/0 to-indigo-500/5'
                                                 }`} />
                                                 {!readOnly && onDeleteProduct && (

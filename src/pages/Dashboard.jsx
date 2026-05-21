@@ -56,6 +56,10 @@ function planHasProgressData(plan, deptName) {
         return !!plan.hrStats;
     }
 
+    if (deptName === 'Marketing') {
+        return plan.tasks?.length > 0 || plan.products?.length > 0;
+    }
+
     return plan.tasks?.length > 0;
 }
 
@@ -154,6 +158,61 @@ const Dashboard = () => {
                 percentage: plan.hrStats.percentage,
                 completed: plan.hrStats.completed,
                 total: plan.hrStats.total,
+                type: 'tasks'
+            };
+        }
+
+        if (departmentName === 'Marketing') {
+            const productMap = {};
+            
+            if (plan.products && plan.products.length > 0) {
+                plan.products.forEach(p => {
+                    const pName = typeof p === 'string' ? p : p.name;
+                    if (pName) {
+                        productMap[pName] = { total: 0, completed: 0 };
+                    }
+                });
+            }
+
+            if (plan.tasks && plan.tasks.length > 0) {
+                plan.tasks.forEach(task => {
+                    const productName = task.assets || task.product;
+                    if (!productName || !String(productName).trim()) return;
+
+                    const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
+                    if (isSubtask) return;
+
+                    if (!productMap[productName]) {
+                        productMap[productName] = { total: 0, completed: 0 };
+                    }
+
+                    productMap[productName].total += 1;
+                    
+                    const status = (task.status || '').toLowerCase();
+                    if (task.done || status === 'completed' || status === 'published') {
+                        productMap[productName].completed += 1;
+                    }
+                });
+            }
+
+            const productsArr = Object.values(productMap);
+            if (productsArr.length === 0) {
+                return { percentage: 0, completed: 0, total: 0, type: 'tasks' };
+            }
+
+            let totalPercentage = 0;
+            productsArr.forEach(p => {
+                const pct = p.total === 0 ? 0 : (p.completed / p.total) * 100;
+                totalPercentage += pct;
+            });
+
+            const finalPct = Math.round(totalPercentage / productsArr.length);
+            console.log(`[DASHBOARD_PCT_DEBUG] Plan: ${plan.title}, Map Keys: ${Object.keys(productMap)}, Arr Length: ${productsArr.length}, TotalPct: ${totalPercentage}, Final: ${finalPct}`);
+
+            return {
+                percentage: finalPct,
+                completed: productsArr.filter(p => p.total > 0 && p.completed === p.total).length,
+                total: productsArr.length,
                 type: 'tasks'
             };
         }
@@ -315,8 +374,24 @@ const Dashboard = () => {
                     setIsEditingSheet(true);
                 }
             } else {
-                const deptId = searchParams.get('deptId');
-                setSearchParams(deptId ? { deptId } : {});
+                const fetchSinglePlan = async () => {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const res = await axios.get(`${API_ORIGIN}/api/plans/${planId}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        setPlans(prev => {
+                            const exists = prev.some(p => p._id === res.data._id);
+                            if (exists) return prev.map(p => p._id === res.data._id ? res.data : p);
+                            return [res.data, ...prev];
+                        });
+                        setActivePlan(res.data);
+                    } catch (err) {
+                        const deptId = searchParams.get('deptId');
+                        setSearchParams(deptId ? { deptId } : {});
+                    }
+                };
+                fetchSinglePlan();
             }
         } else if (!planId && activePlan) {
             setActivePlan(null);
@@ -346,7 +421,13 @@ const Dashboard = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            setPlans([res.data, ...plans]);
+            setPlans(prev => {
+                const exists = prev.some(plan => plan._id === res.data._id);
+                if (exists) {
+                    return prev.map(plan => plan._id === res.data._id ? res.data : plan);
+                }
+                return [res.data, ...prev];
+            });
             fetchDepartments();
 
             setNewPlan({
@@ -446,7 +527,8 @@ const Dashboard = () => {
             formData.append('description', description);
             formData.append('category', category);
             formData.append('planId', activePlan._id);
-            formData.append('departmentId', selectedDept?._id || activePlan.department || '');
+            const deptId = selectedDept?._id || activePlan?.department?._id || activePlan?.department;
+            formData.append('departmentId', deptId || '');
             if (productImageFile) {
                 formData.append('image', productImageFile);
             }
@@ -458,17 +540,10 @@ const Dashboard = () => {
             });
 
             const createdProduct = productRes.data;
-            const productEntry = {
-                productId: createdProduct._id,
-                name: createdProduct.name,
-                description: createdProduct.description,
-                image: createdProduct.image,
-                imageUrl: createdProduct.imageUrl,
-                category: createdProduct.category
-            };
+            
             const updatedPlan = {
                 ...activePlan,
-                products: [...(activePlan.products || []), productEntry]
+                products: [...(activePlan.products || []), createdProduct]
             };
 
             setActivePlan(updatedPlan);
