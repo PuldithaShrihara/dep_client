@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
@@ -85,10 +86,28 @@ const SuperAdminRoute = ({ children }) => {
     return children;
 };
 
+const PathTracker = () => {
+    const location = useLocation();
+
+    useEffect(() => {
+        const path = location.pathname + location.search + location.hash;
+        if (
+            location.pathname !== '/login' &&
+            location.pathname !== '/' &&
+            location.pathname !== '/index.html'
+        ) {
+            localStorage.setItem('lastPath', path);
+        }
+    }, [location]);
+
+    return null;
+};
+
 function App() {
     return (
         <AuthProvider>
             <Router>
+                <PathTracker />
                 <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     <Toaster position="top-right" />
                     <Routes>

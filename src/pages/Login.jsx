@@ -5,10 +5,22 @@ import { Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
 function pathAfterAuth(from) {
-    if (!from || typeof from.pathname !== 'string') return '/dashboard';
+    if (!from || typeof from.pathname !== 'string') {
+        const lastPath = localStorage.getItem('lastPath');
+        if (lastPath && lastPath !== '/login' && lastPath !== '/' && !lastPath.startsWith('/login?')) {
+            return lastPath;
+        }
+        return '/dashboard';
+    }
     const path = `${from.pathname}${from.search || ''}${from.hash || ''}` || '/dashboard';
     // Avoid redirect loops if "from" was the login route
-    if (path === '/login' || path.startsWith('/login?')) return '/dashboard';
+    if (path === '/login' || path.startsWith('/login?')) {
+        const lastPath = localStorage.getItem('lastPath');
+        if (lastPath && lastPath !== '/login' && lastPath !== '/' && !lastPath.startsWith('/login?')) {
+            return lastPath;
+        }
+        return '/dashboard';
+    }
     return path;
 }
 
@@ -69,7 +81,6 @@ const Login = () => {
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 font-medium">Department Plan Monitoring System</p>
                     </div>
-
 
                     {error && (
                         <div className="flex items-center gap-3 p-4 mb-8 text-sm text-red-100 bg-red-500/10 border border-red-500/20 rounded-2xl animate-shake">

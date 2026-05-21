@@ -7,6 +7,7 @@ const AuthContext = createContext();
 function clearStoredAuth() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('lastPath');
     delete axios.defaults.headers.common['Authorization'];
 }
 
