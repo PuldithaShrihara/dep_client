@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
@@ -35,9 +35,23 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
     );
 };
 
+const normalizeProductName = (value) => String(value || '').trim().toLowerCase();
+
+const normalizeDate = (value) => {
+    if (!value) return '';
+    return String(value).trim().split(' ')[0].replace(/\//g, '-');
+};
+
+const getTodayDateStr = () => {
+    const today = new Date();
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+};
+
 const MarketingSheet = ({ 
     planId, 
     initialTasks = [], 
+    initialProducts = [],
     isNew = false, 
     onSuccess, 
     deptId, 
@@ -187,35 +201,57 @@ const MarketingSheet = ({
         return { total, completed, inProgress, rate };
     }, [tasks, filterProduct]);
 
-    const filteredLateTasks = useMemo(() => {
-        return tasks.filter(t => {
-            if (!filterProduct) return true;
-            const fpLower = filterProduct.toLowerCase();
-            const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
-            
-            const matchesProduct = (t.assets === filterProduct) || (t.product && t.product.toLowerCase() === fpLower);
-            if (!matchesProduct) return false;
+    const taskMatchesActiveProduct = useCallback((task) => {
+        if (!filterProduct) return true;
+        const activeProduct = normalizeProductName(filterProduct);
+        return normalizeProductName(task.assets) === activeProduct || normalizeProductName(task.product) === activeProduct;
+    }, [filterProduct]);
 
-            if (!t.endDate || !t.completedTime) return false;
-            const compDateStr = t.completedTime.split(' ')[0];
-            const end = new Date(t.endDate);
-            const comp = new Date(compDateStr);
-            end.setHours(0,0,0,0);
-            comp.setHours(0,0,0,0);
-            return comp.getTime() > end.getTime();
-        });
-    }, [tasks, filterProduct]);
+    const isCompletedLateInActivePlan = useCallback((task) => {
+        if (!taskMatchesActiveProduct(task)) return false;
+        if (!task.endDate) return false;
+
+        const isComp = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+        
+        const endDate = new Date(task.endDate);
+        if (isNaN(endDate.getTime())) return false;
+        endDate.setHours(0, 0, 0, 0);
+
+        if (isComp) {
+            if (!task.completedTime) return false;
+            const compDate = new Date(task.completedTime);
+            if (isNaN(compDate.getTime())) return false;
+            compDate.setHours(0, 0, 0, 0);
+            return compDate.getTime() > endDate.getTime();
+        } else {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return today.getTime() > endDate.getTime();
+        }
+    }, [taskMatchesActiveProduct]);
+
+    const filteredLateTasks = useMemo(() => {
+        return tasks.filter(isCompletedLateInActivePlan);
+    }, [tasks, isCompletedLateInActivePlan]);
 
     // Find the product image from the tasks or fallback
     const activeProductImage = useMemo(() => {
         if (!filterProduct) return null;
+        
+        // 1. Look inside the dedicated plan products definition first!
+        if (initialProducts && initialProducts.length > 0) {
+            const prod = initialProducts.find(p => p.name.toLowerCase() === filterProduct.toLowerCase());
+            if (prod && prod.image) return prod.image;
+        }
+
+        // 2. Fallback to task-level productImage if present
         const taskWithImage = tasks.find(t => 
             ((t.assets === filterProduct) || (t.product && t.product.toLowerCase() === filterProduct.toLowerCase())) && t.productImage
         );
         
         if (taskWithImage?.productImage) return taskWithImage.productImage;
         
-        // Fallback to standard assets if not found (simulating PlanDashboard logic)
+        // 3. Fallback to standard assets if not found
         const fallbacks = [
             '/skincare_product_1_1778561641568.png',
             '/skincare_product_2_1778561675994.png',
@@ -223,17 +259,27 @@ const MarketingSheet = ({
         ];
         const index = filterProduct.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % fallbacks.length;
         return fallbacks[index];
-    }, [tasks, filterProduct]);
+    }, [tasks, filterProduct, initialProducts]);
 
     const lateTasks = useMemo(() => {
         return tasks.filter(t => {
-            if (!t.endDate || !t.completedTime) return false;
-            const compDateStr = t.completedTime.split(' ')[0];
-            const end = new Date(t.endDate);
-            const comp = new Date(compDateStr);
-            end.setHours(0,0,0,0);
-            comp.setHours(0,0,0,0);
-            return comp.getTime() > end.getTime();
+            if (!t.endDate) return false;
+            const endDate = new Date(t.endDate);
+            if (isNaN(endDate.getTime())) return false;
+            endDate.setHours(0, 0, 0, 0);
+
+            const isComp = t.done || (t.status || '').toLowerCase() === 'completed' || (t.status || '').toLowerCase() === 'published';
+            if (isComp) {
+                if (!t.completedTime) return false;
+                const compDate = new Date(t.completedTime);
+                if (isNaN(compDate.getTime())) return false;
+                compDate.setHours(0, 0, 0, 0);
+                return compDate.getTime() > endDate.getTime();
+            } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return today.getTime() > endDate.getTime();
+            }
         });
     }, [tasks]);
 
@@ -266,9 +312,7 @@ const MarketingSheet = ({
                     const now = new Date();
                     const pad = (num) => String(num).padStart(2, '0');
                     updatedTask.completedTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-                    if (updatedTask.status !== 'published' && updatedTask.status !== 'completed') {
-                        updatedTask.status = 'completed';
-                    }
+                    updatedTask.status = 'completed';
                 } else {
                     updatedTask.completedTime = '';
                     if (updatedTask.status === 'published' || updatedTask.status === 'completed') {
@@ -395,14 +439,14 @@ const MarketingSheet = ({
                     showUsersLink={false}
                 />
             )}
-            {lateTasks.length > 0 && (
+            {(filterProduct ? filteredLateTasks : lateTasks).length > 0 && (
                 <div className="mx-6 mt-4 bg-red-500/10 border border-red-500/30 rounded-2xl overflow-hidden shadow-lg shadow-red-500/5 animate-pulse">
                     <div className="bg-red-500 text-white px-5 py-2.5 flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
                         <AlertTriangle size={14} className="shrink-0 animate-bounce" />
                         <span>Late Task Alert — Expected End Date Exceeded!</span>
                     </div>
                     <div className="p-4 space-y-2 max-h-40 overflow-y-auto">
-                        {lateTasks.map((t, idx) => (
+                        {(filterProduct ? filteredLateTasks : lateTasks).map((t, idx) => (
                             <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between text-xs text-red-500 dark:text-red-400 font-bold bg-red-500/5 px-4 py-2.5 rounded-xl border border-red-500/10">
                                 <div className="flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -537,19 +581,6 @@ const MarketingSheet = ({
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Pending</p>
                                 <h3 className="text-3xl font-black text-amber-400 leading-none">{filteredStats.inProgress}</h3>
                             </div>
-                            <div className="w-px h-10 bg-white/10" />
-                            <button 
-                                onClick={() => {
-                                    const alertEl = document.getElementById('late-task-alert-banner');
-                                    if (alertEl) {
-                                        alertEl.scrollIntoView({ behavior: 'smooth' });
-                                    }
-                                }}
-                                className="text-center cursor-pointer focus:outline-none group/overdue"
-                            >
-                                <p className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] mb-1 group-hover/overdue:text-red-400 transition-colors">Overdue</p>
-                                <h3 className="text-3xl font-black text-red-500 leading-none group-hover/overdue:text-red-400 transition-colors">{filteredLateTasks.length}</h3>
-                            </button>
                         </div>
 
                         <div className="flex-1 w-full max-w-md px-10">
@@ -557,15 +588,32 @@ const MarketingSheet = ({
                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Execution Progress</span>
                                 <span className="text-[10px] font-black text-indigo-400/80">{filteredStats.rate}%</span>
                             </div>
-                            <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
-                                <div 
-                                    className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all duration-1000 ease-out rounded-full"
-                                    style={{ width: `${filteredStats.rate}%` }}
-                                />
-                                <div 
-                                    className="absolute top-0 right-0 bottom-0 w-8 bg-white/20 blur-md animate-pulse"
-                                    style={{ left: `calc(${filteredStats.rate}% - 20px)` }}
-                                />
+                            <div className="flex items-center gap-6">
+                                <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all duration-1000 ease-out rounded-full"
+                                        style={{ width: `${filteredStats.rate}%` }}
+                                    />
+                                    <div 
+                                        className="absolute top-0 right-0 bottom-0 w-8 bg-white/20 blur-md animate-pulse"
+                                        style={{ left: `calc(${filteredStats.rate}% - 20px)` }}
+                                    />
+                                </div>
+                                {filteredLateTasks.length > 0 && (
+                                    <button 
+                                        onClick={() => {
+                                            const alertEl = document.getElementById('late-task-alert-banner');
+                                            if (alertEl) {
+                                                alertEl.scrollIntoView({ behavior: 'smooth' });
+                                            }
+                                        }}
+                                        className="flex items-center gap-2 cursor-pointer focus:outline-none group/overdue bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-xl border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)]"
+                                    >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                        <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.1em] group-hover/overdue:text-red-400 transition-colors mt-[1px]">Overdue</p>
+                                        <h3 className="text-xl font-black text-red-500 leading-none group-hover/overdue:text-red-400 transition-colors">{filteredLateTasks.length}</h3>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

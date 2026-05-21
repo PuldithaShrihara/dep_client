@@ -26,6 +26,17 @@ const PlanDashboard = ({
         
         const productMap = {};
         
+        const normalizeDate = (dStr) => {
+            if (!dStr) return '';
+            return String(dStr).trim().split(' ')[0].replace(/\//g, '-');
+        };
+        
+        const getTodayDateStr = () => {
+            const today = new Date();
+            const pad = (num) => String(num).padStart(2, '0');
+            return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+        };
+
         // 1. Initialize from dedicated products array (if it exists)
         if (plan.products && plan.products.length > 0) {
             plan.products.forEach(p => {
@@ -43,11 +54,9 @@ const PlanDashboard = ({
         // 2. Merge in tasks and find any additional products from legacy data
         if (plan.tasks) {
             plan.tasks.forEach(task => {
-                const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
-                if (isSubtask) return; // Ignore subtasks in high-level product progress
+                const productName = task.assets || task.product;
+                if (!productName || !productName.trim()) return; // Ignore blank placeholder rows
 
-                const productName = task.assets || task.product || 'General/Miscellaneous';
-                
                 if (!productMap[productName]) {
                     productMap[productName] = {
                         name: productName,
@@ -62,36 +71,41 @@ const PlanDashboard = ({
                 if (!productMap[productName].overdueTasks) {
                     productMap[productName].overdueTasks = 0;
                 }
-                
-                productMap[productName].totalTasks += 1;
+
                 const status = (task.status || '').toLowerCase();
                 const isComp = task.done || status === 'completed' || status === 'published';
-                if (isComp) {
-                    productMap[productName].completedTasks += 1;
-                }
 
                 // Check if this task is overdue
                 const isTaskOverdue = (() => {
                     if (!task.endDate) return false;
+                    const endDate = new Date(task.endDate);
+                    if (isNaN(endDate.getTime())) return false;
+                    endDate.setHours(0, 0, 0, 0);
+
                     if (isComp) {
                         if (!task.completedTime) return false;
-                        const compDateStr = task.completedTime.split(' ')[0];
-                        const end = new Date(task.endDate);
-                        const comp = new Date(compDateStr);
-                        end.setHours(0,0,0,0);
-                        comp.setHours(0,0,0,0);
-                        return comp.getTime() > end.getTime();
+                        const compDate = new Date(task.completedTime);
+                        if (isNaN(compDate.getTime())) return false;
+                        compDate.setHours(0, 0, 0, 0);
+                        return compDate.getTime() > endDate.getTime();
                     } else {
-                        const end = new Date(task.endDate);
                         const today = new Date();
-                        end.setHours(0,0,0,0);
-                        today.setHours(0,0,0,0);
-                        return today.getTime() > end.getTime();
+                        today.setHours(0, 0, 0, 0);
+                        return today.getTime() > endDate.getTime();
                     }
                 })();
 
                 if (isTaskOverdue) {
                     productMap[productName].overdueTasks += 1;
+                }
+
+                // Ignore subtasks for high-level product progress bar ratio
+                const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
+                if (isSubtask) return; 
+                
+                productMap[productName].totalTasks += 1;
+                if (isComp) {
+                    productMap[productName].completedTasks += 1;
                 }
             });
         }

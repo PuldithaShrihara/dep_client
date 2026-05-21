@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     Briefcase, DollarSign, Cpu,
     ShieldCheck, Factory, TrendingUp, Users, Calendar, ArrowUpRight,
-    X, Plus, Clock, Target, CheckCircle2, Trash2, ChevronLeft, Package, ArrowLeft
+    X, Plus, Clock, Target, CheckCircle2, Trash2, ChevronLeft, Package, ArrowLeft, LayoutDashboard
 } from 'lucide-react';
 import Header from '../components/common/Header';
 
@@ -183,6 +183,61 @@ const Dashboard = () => {
         };
     };
 
+    const calculateOverdueTasks = (plan, departmentName) => {
+        let tasksToCheck = [];
+        if (departmentName === 'R&D') {
+            const mts = getRdMainTasksForPlan(plan);
+            for (const mt of mts) {
+                tasksToCheck.push(mt);
+                if (mt.subtasks) {
+                    tasksToCheck.push(...mt.subtasks);
+                }
+            }
+        } else if (departmentName === 'Marketing' || departmentName === 'Finance') {
+            tasksToCheck = plan.tasks || [];
+        } else {
+            return 0;
+        }
+
+        let overdueCount = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const task of tasksToCheck) {
+            if (!task.endDate) continue;
+            
+            if (departmentName === 'Marketing') {
+                const productName = task.assets || task.product;
+                if (!productName || !String(productName).trim()) continue;
+            }
+
+            const endDate = new Date(task.endDate);
+            if (isNaN(endDate.getTime())) continue;
+            endDate.setHours(0, 0, 0, 0);
+
+            let isComp = false;
+            if (departmentName === 'R&D') {
+                isComp = isSubtaskComplete(task) || (task.status || '').toLowerCase() === 'completed';
+            } else {
+                isComp = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+            }
+
+            if (isComp) {
+                if (task.completedTime) {
+                    const compDate = new Date(task.completedTime);
+                    if (!isNaN(compDate.getTime())) {
+                        compDate.setHours(0, 0, 0, 0);
+                        if (compDate.getTime() > endDate.getTime()) overdueCount++;
+                    }
+                }
+            } else {
+                if (today.getTime() > endDate.getTime()) overdueCount++;
+            }
+        }
+
+        return overdueCount;
+    };
+
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
@@ -249,16 +304,25 @@ const Dashboard = () => {
 
     useEffect(() => {
         const planId = searchParams.get('planId');
+        const product = searchParams.get('product');
         
         if (planId && plans.length > 0) {
             const plan = plans.find(p => p._id === planId);
             if (plan) {
                 if (!activePlan || activePlan._id !== planId) {
                     setActivePlan(plan);
-                    // Only Marketing uses the product drill-down view
-                    if (selectedDept?.name !== 'Marketing') {
+                }
+                
+                if (selectedDept?.name === 'Marketing') {
+                    if (product) {
+                        setActiveProductFilter(product);
                         setIsEditingSheet(true);
+                    } else {
+                        setIsEditingSheet(false);
+                        setActiveProductFilter(null);
                     }
+                } else {
+                    setIsEditingSheet(true);
                 }
             } else {
                 const deptId = searchParams.get('deptId');
@@ -581,6 +645,7 @@ const Dashboard = () => {
                                         onAddProduct={handleAddProduct}
                                         onDeleteProduct={handleDeleteProduct}
                                         onProductClick={(productName) => {
+                                            setSearchParams({ deptId: selectedDept._id, planId: activePlan._id, product: productName });
                                             setActiveProductFilter(productName);
                                             setIsEditingSheet(true);
                                         }}
@@ -605,6 +670,7 @@ const Dashboard = () => {
                                                     setSearchParams({ deptId: selectedDept._id });
                                                 } else {
                                                     // For Marketing, go back to product drill-down
+                                                    setSearchParams({ deptId: selectedDept._id, planId: activePlan._id });
                                                     setIsEditingSheet(false);
                                                     setActiveProductFilter(null);
                                                 }
@@ -624,6 +690,7 @@ const Dashboard = () => {
                                         <MarketingSheet
                                             planId={activePlan?._id}
                                             initialTasks={activePlan?.tasks || []}
+                                            initialProducts={activePlan?.products || []}
                                             initialTitle={activePlan?.title || ''}
                                             initialMonth={activePlan?.month || ''}
                                             initialYear={activePlan?.year || new Date().getFullYear()}
@@ -636,7 +703,11 @@ const Dashboard = () => {
                                                 fetchPlans(selectedDept._id);
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
-                                                setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
+                                                if (activeProductFilter) {
+                                                    setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id, product: activeProductFilter });
+                                                } else {
+                                                    setSearchParams({ deptId: selectedDept._id, planId: updatedPlan._id });
+                                                }
                                             }}
                                             filterProduct={activeProductFilter}
                                         />
@@ -716,9 +787,23 @@ const Dashboard = () => {
                                                         >
                                                             <div className="flex justify-between items-start mb-2.5">
                                                                 <div>
-                                                                    <span className="text-xs font-black uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md">
-                                                                        {plan.month} {plan.year}
-                                                                    </span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-xs font-black uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md">
+                                                                            {plan.month} {plan.year}
+                                                                        </span>
+                                                                        {(() => {
+                                                                            const overdueCount = calculateOverdueTasks(plan, selectedDept?.name);
+                                                                            if (overdueCount > 0) {
+                                                                                return (
+                                                                                    <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[9px] font-black tracking-widest flex items-center gap-1 border border-red-500/20">
+                                                                                        <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse"></span>
+                                                                                        {overdueCount} OVERDUE
+                                                                                    </span>
+                                                                                );
+                                                                            }
+                                                                            return null;
+                                                                        })()}
+                                                                    </div>
 
                                                                     <h5 className="text-base font-black text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-300 transition-colors uppercase tracking-tight mt-2.5">
                                                                         {plan.title}
