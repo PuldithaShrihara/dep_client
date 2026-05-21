@@ -596,12 +596,9 @@ const Dashboard = () => {
                                 </p>
 
                                 <div className="mt-auto">
-                                    <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center mb-2">
                                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                                             Current Progress
-                                        </span>
-                                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">
-                                            {dept.completionPercent || 0}%
                                         </span>
                                     </div>
 
@@ -632,6 +629,14 @@ const Dashboard = () => {
                         }`}>
                         {(!activePlan && !showCreateForm) && (
                             <div className="p-8 pb-4 bg-white/40 dark:bg-white/[0.02] border-b border-slate-200/80 dark:border-white/5">
+                                <button
+                                    type="button"
+                                    aria-label="Close plans window"
+                                    onClick={() => setSearchParams({})}
+                                    className="absolute top-6 right-6 z-50 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
                                 <button 
                                     onClick={() => setSearchParams({})}
                                     className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group"

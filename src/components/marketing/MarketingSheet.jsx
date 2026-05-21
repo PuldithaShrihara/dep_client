@@ -103,6 +103,26 @@ const getTaskDisplayName = (task, fallback = 'Task') => (
     fallback
 );
 
+const isMarketingSubtask = (task) => (
+    !!task._isSubtask ||
+    (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''))
+);
+
+const completeMarketingTask = (task, completedAt, preserveExistingDate = false) => {
+    const existingCompletion = getCompletionDateValue(task);
+    const completionValue = preserveExistingDate && existingCompletion
+        ? existingCompletion
+        : completedAt.toISOString();
+
+    return {
+        ...task,
+        done: true,
+        status: 'completed',
+        dateCompleted: completionValue,
+        completedTime: formatDateTimeValue(completionValue)
+    };
+};
+
 const MarketingSheet = ({ 
     planId, 
     initialTasks = [], 
@@ -324,14 +344,20 @@ const MarketingSheet = ({
         setTasks(prev => {
             const next = [...prev];
             const updatedTask = { ...next[index] };
+            const isMainTask = !isMarketingSubtask(updatedTask);
 
             if (key === 'done') {
                 updatedTask.done = value;
                 if (value) {
                     const now = new Date();
-                    updatedTask.dateCompleted = now.toISOString();
-                    updatedTask.completedTime = formatDateTimeValue(now);
-                    updatedTask.status = 'completed';
+                    Object.assign(updatedTask, completeMarketingTask(updatedTask, now));
+
+                    if (isMainTask) {
+                        for (let childIndex = index + 1; childIndex < next.length; childIndex++) {
+                            if (!isMarketingSubtask(next[childIndex])) break;
+                            next[childIndex] = completeMarketingTask(next[childIndex], now, true);
+                        }
+                    }
                 } else {
                     updatedTask.dateCompleted = null;
                     updatedTask.completedTime = '';
@@ -341,11 +367,16 @@ const MarketingSheet = ({
                 }
             } else if (key === 'status') {
                 updatedTask.status = value;
-                if (value === 'published' || value === 'completed') {
-                    updatedTask.done = true;
+                if (value === 'completed') {
                     const now = new Date();
-                    updatedTask.dateCompleted = now.toISOString();
-                    updatedTask.completedTime = formatDateTimeValue(now);
+                    Object.assign(updatedTask, completeMarketingTask(updatedTask, now));
+
+                    if (isMainTask) {
+                        for (let childIndex = index + 1; childIndex < next.length; childIndex++) {
+                            if (!isMarketingSubtask(next[childIndex])) break;
+                            next[childIndex] = completeMarketingTask(next[childIndex], now, true);
+                        }
+                    }
                 } else {
                     updatedTask.done = false;
                     updatedTask.dateCompleted = null;
