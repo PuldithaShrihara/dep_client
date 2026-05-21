@@ -13,36 +13,46 @@ export function isNormalUser(role) {
 /** True if this user may change plan data (backend enforces the same rules). */
 export function canEditPlans(user) {
     if (!user || user.status === 'Inactive') return false;
-    if (isAdmin(user.role)) return true;
     if (isNormalUser(user.role)) return false;
-    if (isDepartmentHead(user.role)) {
-        // If department is null/empty, it means "All Departments" (Global) access.
-        if (!user.department) return true;
-        return true; 
-    }
-    return false;
+    return true; // Admin and DeptHead can edit plans in the departments they can see
 }
 
 export function canEditDepartment(user, targetDepartmentName) {
     if (!user || user.status === 'Inactive') return false;
-    if (isAdmin(user.role)) return true;
     if (isNormalUser(user.role)) return false;
-    if (isDepartmentHead(user.role)) {
-        // If department is null/empty, it means "All Departments" (Global) access.
-        if (!user.department) return true;
+    
+    // Strict department boundary for ALL roles, including Admin
+    if (user.department) {
         return user.department === targetDepartmentName;
     }
-    return false;
+    
+    // If no department is set (Global), they can edit anything
+    return true;
+}
+
+export function canViewDepartment(user, targetDepartmentName) {
+    if (!user || user.status === 'Inactive') return false;
+    
+    // Strict department boundary for ALL roles, including Admin
+    if (user.department) {
+        return user.department === targetDepartmentName;
+    }
+    
+    // If no department is set (Global), they can view anything
+    return true;
 }
 
 export function canViewAdminArea(user) {
     if (!user || user.status === 'Inactive') return false;
-    // admin role has access
-    if (isAdmin(user.role)) return true;
-    // Manager/DeptHead only has access if they belong to the 'Admin' department
-    if (isDepartmentHead(user.role)) {
-        return user.department === 'Admin';
+    
+    // If restricted to a non-Admin department, they cannot view Admin area
+    if (user.department && user.department !== 'Admin') {
+        return false;
     }
+    
+    if (isAdmin(user.role)) return true;
+    if (isDepartmentHead(user.role)) return true;
+    
     return false;
 }
 

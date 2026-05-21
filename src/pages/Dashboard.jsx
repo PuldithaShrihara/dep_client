@@ -17,7 +17,7 @@ import FinanceSheet from '../components/finance/FinanceSheet.jsx';
 import { API_ORIGIN } from '../config';
 import { migrateLegacyRdTasksToNested, isSubtaskComplete } from '../utils/rnd/rdTasks';
 import { getAxiosErrorMessage } from '../utils/toastHelpers';
-import { canEditPlans, isAdmin, isDepartmentHead, canEditDepartment } from '../utils/roles';
+import { canEditPlans, isAdmin, isDepartmentHead, canEditDepartment, canViewDepartment } from '../utils/roles';
 import PlanDashboard from '../components/common/PlanDashboard';
 
 const EMPTY_TASKS = [];
@@ -96,7 +96,7 @@ const Dashboard = () => {
 
     const visibleDepartments = useMemo(() => {
         if (!user) return [];
-        return departments;
+        return departments.filter(dept => canViewDepartment(user, dept.name));
     }, [departments, user]);
 
     const sortedPlans = useMemo(() => {
@@ -605,7 +605,6 @@ const Dashboard = () => {
                 subtitle="CORE SYSTEM DPMS v4.0" 
                 iconBg="bg-indigo-600"
                 showNexusLink={false}
-                showUsersLink={false}
             />
 
             <main className="max-w-7xl mx-auto px-6 py-8 relative">
