@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Unauthorized from './pages/Unauthorized';
 import AdminLayout from './layouts/AdminLayout';
 import UserManagement from "./components/admin/UserManagement.jsx";
 import HrTaskHub from "./pages/HrTaskHub.jsx";
@@ -67,7 +68,7 @@ const AdminRoute = ({ children }) => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (!canViewAdminArea(user)) return <Navigate to="/dashboard" replace />;
+    if (!canViewAdminArea(user)) return <Navigate to="/unauthorized" replace />;
     return children;
 };
 
@@ -82,7 +83,7 @@ const SuperAdminRoute = ({ children }) => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (!isAdmin(user.role)) return <Navigate to="/dashboard" replace />;
+    if (!isAdmin(user.role)) return <Navigate to="/unauthorized" replace />;
     return children;
 };
 
@@ -168,6 +169,7 @@ function App() {
                         >
                             <Route index element={<HrTaskHub />} />
                         </Route>
+                        <Route path="/unauthorized" element={<Unauthorized />} />
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </div>
