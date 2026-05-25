@@ -17,7 +17,7 @@ const getProductImageUrl = (imagePath) => {
     return `${PRODUCT_IMAGE_API_ORIGIN}${imagePath}`;
 };
 
-const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
+const AutoResizeTextarea = ({ value, onChange, placeholder, className, disabled }) => {
     const textareaRef = React.useRef(null);
 
     useEffect(() => {
@@ -32,9 +32,10 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className }) => {
             ref={textareaRef}
             value={value}
             onChange={onChange}
+            disabled={disabled}
             placeholder={placeholder}
             rows="1"
-            className={`w-full bg-transparent border-none focus:ring-0 resize-none overflow-hidden min-h-[16px] text-[14px] leading-tight outline-none ${className}`}
+            className={`w-full bg-transparent border-none focus:ring-0 resize-none overflow-hidden min-h-[16px] text-[14px] leading-tight outline-none ${disabled ? 'cursor-not-allowed opacity-80' : ''} ${className}`}
             onInput={(e) => {
                 e.target.style.height = 'auto';
                 e.target.style.height = e.target.scrollHeight + 'px';
@@ -143,7 +144,8 @@ const MarketingSheet = ({
     initialYear = new Date().getFullYear(), 
     initialTarget = '', 
     initialDescription = '',
-    filterProduct = null // New prop for filtering
+    filterProduct = null, // New prop for filtering
+    readOnly = false
 }) => {
     const [planData, setPlanData] = useState({
         title: initialTitle,
@@ -520,18 +522,20 @@ const MarketingSheet = ({
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Strategy Title</label>
                                 <div className="relative group">
                                     <input
-                                        className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                                        className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={planData.title}
                                         onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
+                                        disabled={readOnly}
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Month</label>
                                 <select
-                                    className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none"
+                                    className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     value={planData.month}
                                     onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
+                                    disabled={readOnly}
                                 >
                                     <option value="">Select...</option>
                                     {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
@@ -543,9 +547,10 @@ const MarketingSheet = ({
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Year</label>
                                 <input
                                     type="number"
-                                    className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                                    className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                     value={planData.year}
                                     onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
+                                    disabled={readOnly}
                                 />
                             </div>
                         </div>
@@ -717,19 +722,23 @@ const MarketingSheet = ({
                             </div>
                         </>
                     )}
-                        <button 
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all font-bold text-xs"
-                        >
-                            <CheckCircle size={12} /> {saving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button 
-                            onClick={addRow}
-                            className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-[#1a1f2e] hover:bg-slate-100 dark:bg-[#252a3a] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 rounded-lg transition-all font-bold text-xs"
-                        >
-                            <Plus size={12} /> {filterProduct ? 'Add Campaign' : 'Add Row'}
-                        </button>
+                        {!readOnly && (
+                            <>
+                                <button 
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all font-bold text-xs"
+                                >
+                                    <CheckCircle size={12} /> {saving ? 'Saving...' : 'Save'}
+                                </button>
+                                <button 
+                                    onClick={addRow}
+                                    className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-[#1a1f2e] hover:bg-slate-100 dark:bg-[#252a3a] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 rounded-lg transition-all font-bold text-xs"
+                                >
+                                    <Plus size={12} /> {filterProduct ? 'Add Campaign' : 'Add Row'}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -747,7 +756,7 @@ const MarketingSheet = ({
                                     </div>
                                 </th>
                             ))}
-                            <th className="p-2 w-10 bg-[#b45309]"></th>
+                            {!readOnly && <th className="p-2 w-10 bg-[#b45309]"></th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/5">
@@ -861,10 +870,11 @@ const MarketingSheet = ({
                                                             <AutoResizeTextarea
                                                                 value={isSubtask && filterProduct ? task.mediaType : task[col.key]}
                                                                 onChange={(e) => handleInputChange(idx, isSubtask && filterProduct ? 'mediaType' : col.key, e.target.value)}
+                                                                disabled={readOnly}
                                                                 placeholder={isSubtask ? "Subtask details..." : "Enter goal/objective..."}
                                                                 className={`${isSubtask ? 'text-slate-500 font-medium' : 'font-bold'} ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
                                                             />
-                                                            {!isSubtask && (task.product?.trim() || task.mainGoal?.trim()) && (
+                                                            {!readOnly && !isSubtask && (task.product?.trim() || task.mainGoal?.trim()) && (
                                                                 <button
                                                                     onClick={() => handleAddSubtask(idx)}
                                                                     className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 bg-[#d97706] hover:bg-[#b45309] text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover/input:opacity-100 shadow-lg shadow-orange-500/20 z-10"
@@ -903,7 +913,8 @@ const MarketingSheet = ({
                                                                             </div>
                                                                             <button 
                                                                                 onClick={() => handleInputChange(idx, 'done', true)}
-                                                                                className="text-[8px] text-slate-400 hover:text-emerald-500 font-bold uppercase transition-colors mt-0.5"
+                                                                                disabled={readOnly}
+                                                                                className={`text-[8px] font-bold uppercase mt-0.5 ${readOnly ? 'text-slate-500 cursor-not-allowed opacity-50' : 'text-slate-400 hover:text-emerald-500 transition-colors'}`}
                                                                             >
                                                                                 Force
                                                                             </button>
@@ -914,18 +925,20 @@ const MarketingSheet = ({
                                                         ) : (
                                                             <button 
                                                                 onClick={() => handleInputChange(idx, 'done', !task.done)}
-                                                                className={`p-1.5 rounded-xl transition-all ${isCompleted ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                disabled={readOnly}
+                                                                className={`p-1.5 rounded-xl transition-all ${isCompleted ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400'} ${readOnly ? 'cursor-not-allowed opacity-80' : 'hover:text-slate-600'}`}
                                                             >
                                                                 {isCompleted ? <CheckCircle size={16} /> : <Circle size={16} />}
                                                             </button>
                                                         )}
                                                     </div>
                                                 ) : col.key === 'status' ? (
-                                                    <div className={`rounded-lg border px-2 py-0.5 transition-all ${getStatusStyles(task.status)}`}>
+                                                    <div className={`rounded-lg border px-2 py-0.5 transition-all ${getStatusStyles(task.status)} ${readOnly ? 'opacity-80' : ''}`}>
                                                         <select
-                                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-wider cursor-pointer appearance-none outline-none"
+                                                            className={`w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-wider appearance-none outline-none ${readOnly ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                                             value={task.status}
                                                             onChange={(e) => handleInputChange(idx, 'status', e.target.value)}
+                                                            disabled={readOnly}
                                                         >
                                                             <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
                                                             <option value="planning" className="bg-white dark:bg-[#0a0f1d]">Planning</option>
@@ -936,11 +949,12 @@ const MarketingSheet = ({
                                                         </select>
                                                     </div>
                                                 ) : col.key === 'priority' ? (
-                                                    <div className={`rounded-lg border px-2 py-0.5 transition-all ${getPriorityStyles(task.priority)}`}>
+                                                    <div className={`rounded-lg border px-2 py-0.5 transition-all ${getPriorityStyles(task.priority)} ${readOnly ? 'opacity-80' : ''}`}>
                                                         <select
-                                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-wider cursor-pointer appearance-none outline-none"
+                                                            className={`w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-wider appearance-none outline-none ${readOnly ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                                             value={task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}
                                                             onChange={(e) => handleInputChange(idx, 'priority', e.target.value)}
+                                                            disabled={readOnly}
                                                         >
                                                             <option value="" className="bg-white dark:bg-[#0a0f1d]">Select...</option>
                                                             <option value="High" className="bg-white dark:bg-[#0a0f1d]">High</option>
@@ -953,7 +967,8 @@ const MarketingSheet = ({
                                                         type="date"
                                                         value={task[col.key]}
                                                         onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
-                                                        className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none"
+                                                        disabled={readOnly}
+                                                        className={`w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none ${readOnly ? 'cursor-not-allowed opacity-80' : ''}`}
                                                     />
                                                 ) : col.key === 'completedTime' ? (
                                                     <div className={`w-full text-center px-1.5 py-2 font-mono text-[11px] tracking-tight select-all ${isCompletedLate(task) ? 'text-red-500 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -971,19 +986,22 @@ const MarketingSheet = ({
                                                     <AutoResizeTextarea
                                                         value={task[col.key]}
                                                         onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
+                                                        disabled={readOnly}
                                                         className={`${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
                                                     />
                                                 )}
                                             </td>
                                         ))}
-                                        <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : (isSubtask ? 'bg-[#0f172a]/50' : 'bg-slate-900/40')}`}>
-                                            <button 
-                                                onClick={() => removeRow(idx)}
-                                                className="p-1.5 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
-                                        </td>
+                                        {!readOnly && (
+                                            <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : (isSubtask ? 'bg-[#0f172a]/50' : 'bg-slate-900/40')}`}>
+                                                <button 
+                                                    onClick={() => removeRow(idx)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </td>
+                                        )}
                                     </tr>
                                 );
                             });
