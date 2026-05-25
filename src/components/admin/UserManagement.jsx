@@ -64,7 +64,7 @@ const UserManagement = () => {
                 password: '',
                 confirmPassword: '',
                 role: user.role,
-                department: user.department || 'All Departments',
+                department: user.department || (user.role === 'User' ? departments[0] : 'All Departments'),
                 status: user.status
             });
         } else {
@@ -77,7 +77,7 @@ const UserManagement = () => {
                 password: '',
                 confirmPassword: '',
                 role: 'User',
-                department: 'All Departments',
+                department: departments[0],
                 status: 'Active'
             });
         }
@@ -335,7 +335,14 @@ const UserManagement = () => {
                                     <select
                                         className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-medium appearance-none"
                                         value={formData.role}
-                                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        onChange={(e) => {
+                                            const newRole = e.target.value;
+                                            const updates = { role: newRole };
+                                            if (newRole === 'User' && formData.department === 'All Departments') {
+                                                updates.department = departments[0];
+                                            }
+                                            setFormData({ ...formData, ...updates });
+                                        }}
                                     >
                                         {roles.map(r => <option key={r} value={r}>{r}</option>)}
                                     </select>
@@ -348,7 +355,9 @@ const UserManagement = () => {
                                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                                         required
                                     >
-                                        {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                                        {departmentOptions
+                                            .filter(d => !(formData.role === 'User' && d === 'All Departments'))
+                                            .map(d => <option key={d} value={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">

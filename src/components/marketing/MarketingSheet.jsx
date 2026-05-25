@@ -739,7 +739,6 @@ const MarketingSheet = ({
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">
                             <th className="p-2 w-12 bg-[#b45309] text-[12px] font-black text-white text-center uppercase tracking-tight">No.</th>
-                            <th className="p-2 w-10 bg-[#b45309]"></th>
                             {columns.map(col => (
                                 <th key={col.key} className={`p-2 text-[12px] font-black text-white uppercase tracking-tight ${col.width}`}>
                                     <div className="flex items-center gap-2">
@@ -748,6 +747,7 @@ const MarketingSheet = ({
                                     </div>
                                 </th>
                             ))}
+                            <th className="p-2 w-10 bg-[#b45309]"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/5">
@@ -832,14 +832,6 @@ const MarketingSheet = ({
                                             <span className={isSubtask ? 'text-[11px] opacity-70' : 'text-[14px]'}>
                                                 {displayNumber}
                                             </span>
-                                        </td>
-                                        <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : (isSubtask ? 'bg-[#0f172a]/50' : 'bg-slate-900/40')}`}>
-                                            <button 
-                                                onClick={() => removeRow(idx)}
-                                                className="p-1.5 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
                                         </td>
                                         {columns.map(col => (
                                             <td key={col.key} className={`p-1 ${col.width} relative`}>
@@ -984,6 +976,14 @@ const MarketingSheet = ({
                                                 )}
                                             </td>
                                         ))}
+                                        <td className={`p-1 w-10 text-center transition-colors ${isCompleted ? 'bg-emerald-500/30' : (isSubtask ? 'bg-[#0f172a]/50' : 'bg-slate-900/40')}`}>
+                                            <button 
+                                                onClick={() => removeRow(idx)}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 );
                             });
