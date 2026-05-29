@@ -496,21 +496,35 @@ const MarketingSheet = ({
                         <span>Late Task Alert - Expected End Date Exceeded!</span>
                     </div>
                     <div className="p-4 space-y-2 max-h-40 overflow-y-auto">
-                        {(filterProduct ? filteredOverdueTasks : overdueTasks).map((t, idx) => (
-                            <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between text-xs text-red-500 dark:text-red-400 font-bold bg-red-500/5 px-4 py-2.5 rounded-xl border border-red-500/10">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                    <span>Campaign / Subtask:</span>
-                                    <span className="text-slate-900 dark:text-white font-extrabold uppercase">
-                                        {getTaskDisplayName(t, `Task #${idx + 1}`)}
-                                    </span>
-                                    <span>is not completed!</span>
+                        {(filterProduct ? filteredOverdueTasks : overdueTasks).map((t, idx) => {
+                            const originalIdx = tasks.indexOf(t);
+                            return (
+                                <div 
+                                    key={idx} 
+                                    onClick={() => {
+                                        const el = document.getElementById(`task-row-${originalIdx}`);
+                                        if (el) {
+                                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            el.classList.add('animate-pulse', 'bg-red-500/30');
+                                            setTimeout(() => el.classList.remove('animate-pulse', 'bg-red-500/30'), 2000);
+                                        }
+                                    }}
+                                    className="flex flex-col md:flex-row md:items-center justify-between text-xs text-red-500 dark:text-red-400 font-bold bg-red-500/5 hover:bg-red-500/10 px-4 py-2.5 rounded-xl border border-red-500/10 cursor-pointer transition-colors"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                        <span>Campaign / Subtask:</span>
+                                        <span className="text-slate-900 dark:text-white font-extrabold uppercase">
+                                            {getTaskDisplayName(t, `Task #${idx + 1}`)}
+                                        </span>
+                                        <span>is not completed!</span>
+                                    </div>
+                                    <div className="mt-1.5 md:mt-0 font-mono text-[10px] bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 text-red-600 dark:text-red-400">
+                                        Expected: {formatDateValue(t.endDate)}
+                                    </div>
                                 </div>
-                                <div className="mt-1.5 md:mt-0 font-mono text-[10px] bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 text-red-600 dark:text-red-400">
-                                    Expected: {formatDateValue(t.endDate)}
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -837,7 +851,7 @@ const MarketingSheet = ({
                                 }
 
                                 return (
-                                    <tr key={idx} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : (isOverdue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}`}>
+                                    <tr key={idx} id={`task-row-${idx}`} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : (isOverdue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}`}>
                                         <td className={`p-1.5 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : (isSubtask ? 'bg-[#0f172a] text-slate-500' : 'bg-slate-900/60 text-slate-400')} w-12`}>
                                             <span className={isSubtask ? 'text-[11px] opacity-70' : 'text-[14px]'}>
                                                 {displayNumber}
