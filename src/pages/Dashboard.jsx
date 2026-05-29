@@ -761,7 +761,7 @@ const Dashboard = () => {
                                     />
                                 </div>
                             ) : ((activePlan || showCreateForm) && ['Marketing', 'R&D', 'Finance'].includes(selectedDept?.name)) ? (
-                                <div className="flex-1 flex flex-col min-h-0 h-full">
+                                <div className="flex-1 flex flex-col">
                                     <div className="px-8 pt-8 pb-4 bg-[#0a0f1d]">
                                         <button
                                             type="button"

@@ -372,7 +372,7 @@ const RnDSheet = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#020617]/50 rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5">
+        <div className="flex flex-col min-h-full bg-[#020617]/50 rounded-[32px] border border-slate-200 dark:border-white/5">
             {!filterProduct && (
                 <Header 
                     title="R&D Department" 
@@ -469,7 +469,7 @@ const RnDSheet = ({
                     </div>
                 )}
             
-            <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50/5">
+            <div className="w-full bg-slate-50/5 pb-10">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">

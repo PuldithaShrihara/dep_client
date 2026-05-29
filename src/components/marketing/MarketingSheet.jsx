@@ -479,7 +479,7 @@ const MarketingSheet = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
+        <div className="flex flex-col min-h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
             {!filterProduct && (
                 <Header 
                     title="Marketing Department" 
@@ -743,7 +743,7 @@ const MarketingSheet = ({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50 dark:bg-white/[0.01]">
+            <div className="w-full bg-slate-50 dark:bg-white/[0.01] pb-10">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">
@@ -828,6 +828,7 @@ const MarketingSheet = ({
                                 const idx = originalIndex;
                                 const isRowTaskCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
                                 const isCompleted = isRowTaskCompleted || parentCompleted;
+                                const isOverdue = !isCompleted && isOverdueNotCompleted(task);
                                 
                                 if (!filterProduct) {
                                     if (filterChannel !== 'All Channels' && task.marketingChannel !== filterChannel) return null;
@@ -836,7 +837,7 @@ const MarketingSheet = ({
                                 }
 
                                 return (
-                                    <tr key={idx} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'}`}>
+                                    <tr key={idx} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : (isOverdue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}`}>
                                         <td className={`p-1.5 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : (isSubtask ? 'bg-[#0f172a] text-slate-500' : 'bg-slate-900/60 text-slate-400')} w-12`}>
                                             <span className={isSubtask ? 'text-[11px] opacity-70' : 'text-[14px]'}>
                                                 {displayNumber}
