@@ -235,56 +235,106 @@ const MarketingSheet = ({
         setTasks(newTasks);
     };
 
+    // Helper to calculate main task completion percentage (fractional if has subtasks)
+    const getMainTaskCompletion = useCallback((mainTask, mainTaskIdx, allTasks) => {
+        const isRowCompleted = mainTask.done || (mainTask.status || '').toLowerCase() === 'completed' || (mainTask.status || '').toLowerCase() === 'published';
+        if (isRowCompleted) return 100;
+
+        // Count subtasks
+        let totalSub = 0;
+        let doneSub = 0;
+        for (let sidx = mainTaskIdx + 1; sidx < allTasks.length; sidx++) {
+            const st = allTasks[sidx];
+            const isSt = !!st._isSubtask || (st.product === '' && (st.mediaType !== '' || st.mainGoal !== ''));
+            if (!isSt) break;
+            totalSub++;
+            if (st.done || (st.status || '').toLowerCase() === 'completed' || (st.status || '').toLowerCase() === 'published') {
+                doneSub++;
+            }
+        }
+
+        if (totalSub > 0) {
+            return Math.round((doneSub / totalSub) * 100);
+        }
+        return 0;
+    }, []);
+
     // Statistics Calculation
     const stats = useMemo(() => {
-        const validTasks = tasks.filter(t => {
+        const validTasks = [];
+        const taskIndices = [];
+        
+        tasks.forEach((t, idx) => {
             const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
-            if (isSubtask) return false;
+            if (isSubtask) return;
 
-            return (t.product && t.product.trim()) || 
-                   (t.mainGoal && t.mainGoal.trim()) || 
-                   (t.description && t.description.trim());
+            const isValid = (t.product && t.product.trim()) || 
+                            (t.mainGoal && t.mainGoal.trim()) || 
+                            (t.description && t.description.trim());
+            if (isValid) {
+                validTasks.push(t);
+                taskIndices.push(idx);
+            }
         });
 
         const total = validTasks.length;
-        const completed = validTasks.filter(t => {
-            const status = (t.status || '').toLowerCase();
-            return t.done || status === 'completed' || status === 'published';
-        }).length;
+        let sumPct = 0;
+        let completed = 0;
+        
+        validTasks.forEach((t, i) => {
+            const originalIndex = taskIndices[i];
+            const pct = getMainTaskCompletion(t, originalIndex, tasks);
+            sumPct += pct;
+            if (pct === 100) {
+                completed += 1;
+            }
+        });
+
         const inProgress = total - completed;
-        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const rate = total > 0 ? Math.round(sumPct / total) : 0;
 
         return { total, completed, inProgress, rate };
-    }, [tasks]);
+    }, [tasks, getMainTaskCompletion]);
 
     // Statistics for specifically filtered product (Campaign Page)
     const filteredStats = useMemo(() => {
-        const filteredTasks = tasks.filter(t => {
-            if (!filterProduct) return true;
-            const fpLower = filterProduct.toLowerCase();
-            
-            // Check if it's a subtask (based on _isSubtask flag OR empty product name with media/goal)
-            const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
-            if (isSubtask) return false;
-
-            return (t.assets === filterProduct) || (t.product && t.product.toLowerCase() === fpLower);
-        });
+        const validTasks = [];
+        const taskIndices = [];
         
-        const validTasks = filteredTasks.filter(t => 
-            (t.product && t.product.trim()) || 
-            (t.mainGoal && t.mainGoal.trim()) || 
-            (t.description && t.description.trim())
-        );
+        tasks.forEach((t, idx) => {
+            const isSubtask = !!t._isSubtask || (t.product === '' && (t.mediaType !== '' || t.mainGoal !== ''));
+            if (isSubtask) return;
+
+            const matchesProduct = (t.assets === filterProduct) || (t.product && t.product.toLowerCase() === (filterProduct || '').toLowerCase());
+            if (filterProduct && !matchesProduct) return;
+
+            const isValid = (t.product && t.product.trim()) || 
+                            (t.mainGoal && t.mainGoal.trim()) || 
+                            (t.description && t.description.trim());
+            if (isValid) {
+                validTasks.push(t);
+                taskIndices.push(idx);
+            }
+        });
+
         const total = validTasks.length;
-        const completed = validTasks.filter(t => {
-            const status = (t.status || '').toLowerCase();
-            return t.done || status === 'completed' || status === 'published';
-        }).length;
+        let sumPct = 0;
+        let completed = 0;
+        
+        validTasks.forEach((t, i) => {
+            const originalIndex = taskIndices[i];
+            const pct = getMainTaskCompletion(t, originalIndex, tasks);
+            sumPct += pct;
+            if (pct === 100) {
+                completed += 1;
+            }
+        });
+
         const inProgress = total - completed;
-        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const rate = total > 0 ? Math.round(sumPct / total) : 0;
 
         return { total, completed, inProgress, rate };
-    }, [tasks, filterProduct]);
+    }, [tasks, filterProduct, getMainTaskCompletion]);
 
     const taskMatchesActiveProduct = useCallback((task) => {
         if (!filterProduct) return true;

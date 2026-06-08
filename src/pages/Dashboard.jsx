@@ -169,30 +169,59 @@ const Dashboard = () => {
                 plan.products.forEach(p => {
                     const pName = typeof p === 'string' ? p : p.name;
                     if (pName && String(pName).trim()) {
-                        productMap[String(pName).trim().toLowerCase()] = { total: 0, completed: 0, originalName: pName };
+                        productMap[String(pName).trim().toLowerCase()] = { sumPct: 0, count: 0, originalName: pName };
                     }
                 });
             }
 
             if (plan.tasks && plan.tasks.length > 0) {
-                plan.tasks.forEach(task => {
-                    const productName = task.assets || task.product;
-                    if (!productName || !String(productName).trim()) return;
-
+                // Find main tasks and their indices first
+                const mainTasks = [];
+                const mainTaskIndices = [];
+                plan.tasks.forEach((task, idx) => {
                     const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
                     if (isSubtask) return;
-
-                    const key = String(productName).trim().toLowerCase();
-                    if (!productMap[key]) {
-                        productMap[key] = { total: 0, completed: 0, originalName: productName };
-                    }
-
-                    productMap[key].total += 1;
                     
-                    const status = (task.status || '').toLowerCase();
-                    if (task.done || status === 'completed' || status === 'published') {
-                        productMap[key].completed += 1;
+                    const productName = task.assets || task.product;
+                    if (!productName || !String(productName).trim()) return;
+                    
+                    mainTasks.push(task);
+                    mainTaskIndices.push(idx);
+                });
+
+                mainTasks.forEach((task, i) => {
+                    const mainTaskIdx = mainTaskIndices[i];
+                    const productName = task.assets || task.product;
+                    const key = String(productName).trim().toLowerCase();
+
+                    if (!productMap[key]) {
+                        productMap[key] = { sumPct: 0, count: 0, originalName: productName };
                     }
+
+                    // Calculate main task completion percentage
+                    const isRowCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+                    let pct = 0;
+                    if (isRowCompleted) {
+                        pct = 100;
+                    } else {
+                        let totalSub = 0;
+                        let doneSub = 0;
+                        for (let sidx = mainTaskIdx + 1; sidx < plan.tasks.length; sidx++) {
+                            const st = plan.tasks[sidx];
+                            const isSt = !!st._isSubtask || (st.product === '' && (st.mediaType !== '' || st.mainGoal !== ''));
+                            if (!isSt) break;
+                            totalSub++;
+                            if (st.done || (st.status || '').toLowerCase() === 'completed' || (st.status || '').toLowerCase() === 'published') {
+                                doneSub++;
+                            }
+                        }
+                        if (totalSub > 0) {
+                            pct = Math.round((doneSub / totalSub) * 100);
+                        }
+                    }
+
+                    productMap[key].sumPct += pct;
+                    productMap[key].count += 1;
                 });
             }
 
@@ -202,17 +231,20 @@ const Dashboard = () => {
             }
 
             let totalPercentage = 0;
+            let fullyCompletedProducts = 0;
             productsArr.forEach(p => {
-                const pct = p.total === 0 ? 0 : (p.completed / p.total) * 100;
-                totalPercentage += pct;
+                const prodPct = p.count === 0 ? 0 : Math.round(p.sumPct / p.count);
+                totalPercentage += prodPct;
+                if (prodPct === 100) {
+                    fullyCompletedProducts += 1;
+                }
             });
 
             const finalPct = Math.round(totalPercentage / productsArr.length);
-            console.log(`[DASHBOARD_PCT_DEBUG] Plan: ${plan.title}, Map Keys: ${Object.keys(productMap)}, Arr Length: ${productsArr.length}, TotalPct: ${totalPercentage}, Final: ${finalPct}`);
 
             return {
                 percentage: finalPct,
-                completed: productsArr.filter(p => p.total > 0 && p.completed === p.total).length,
+                completed: fullyCompletedProducts,
                 total: productsArr.length,
                 type: 'tasks'
             };

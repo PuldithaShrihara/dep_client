@@ -53,14 +53,26 @@ const PlanDashboard = ({
                 productMap[key] = {
                     name: p.name,
                     category: p.category || 'Campaign',
-                    totalTasks: 0,
-                    completedTasks: 0,
+                    sumPct: 0,
+                    count: 0,
                     overdueTasks: 0,
                     image: p.image || p.imageUrl || null
                 };
             });
         }
         
+        // Find main tasks and their indices first
+        const mainTasks = [];
+        const mainTaskIndices = [];
+        if (plan.tasks) {
+            plan.tasks.forEach((task, idx) => {
+                const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
+                if (isSubtask) return;
+                mainTasks.push(task);
+                mainTaskIndices.push(idx);
+            });
+        }
+
         // 2. Merge in tasks and find any additional products from legacy data
         if (plan.tasks) {
             plan.tasks.forEach(task => {
@@ -73,8 +85,8 @@ const PlanDashboard = ({
                     productMap[key] = {
                         name: productName,
                         category: task.mediaType || 'Marketing',
-                        totalTasks: 0,
-                        completedTasks: 0,
+                        sumPct: 0,
+                        count: 0,
                         overdueTasks: 0,
                         image: null
                     };
@@ -102,21 +114,61 @@ const PlanDashboard = ({
                 if (isTaskOverdue) {
                     productMap[key].overdueTasks += 1;
                 }
+            });
 
-                // Ignore subtasks for high-level product progress bar ratio
-                const isSubtask = !!task._isSubtask || (task.product === '' && (task.mediaType !== '' || task.mainGoal !== ''));
-                if (isSubtask) return; 
-                
-                productMap[key].totalTasks += 1;
-                if (isComp) {
-                    productMap[key].completedTasks += 1;
+            // Calculate main task completion percentage for each product
+            mainTasks.forEach((task, i) => {
+                const mainTaskIdx = mainTaskIndices[i];
+                const productName = task.assets || task.product;
+                if (!productName || !String(productName).trim()) return;
+
+                const key = String(productName).trim().toLowerCase();
+                if (!productMap[key]) {
+                    productMap[key] = {
+                        name: productName,
+                        category: task.mediaType || 'Marketing',
+                        sumPct: 0,
+                        count: 0,
+                        overdueTasks: 0,
+                        image: null
+                    };
                 }
+
+                if (productMap[key].sumPct === undefined) {
+                    productMap[key].sumPct = 0;
+                    productMap[key].count = 0;
+                }
+
+                // Calculate main task completion percentage
+                const isRowCompleted = task.done || (task.status || '').toLowerCase() === 'completed' || (task.status || '').toLowerCase() === 'published';
+                let pct = 0;
+                if (isRowCompleted) {
+                    pct = 100;
+                } else {
+                    let totalSub = 0;
+                    let doneSub = 0;
+                    for (let sidx = mainTaskIdx + 1; sidx < plan.tasks.length; sidx++) {
+                        const st = plan.tasks[sidx];
+                        const isSt = !!st._isSubtask || (st.product === '' && (st.mediaType !== '' || st.mainGoal !== ''));
+                        if (!isSt) break;
+                        totalSub++;
+                        if (st.done || (st.status || '').toLowerCase() === 'completed' || (st.status || '').toLowerCase() === 'published') {
+                            doneSub++;
+                        }
+                    }
+                    if (totalSub > 0) {
+                        pct = Math.round((doneSub / totalSub) * 100);
+                    }
+                }
+
+                productMap[key].sumPct += pct;
+                productMap[key].count += 1;
             });
         }
 
         return Object.values(productMap).map(p => ({
             ...p,
-            progress: p.totalTasks > 0 ? Math.round((p.completedTasks / p.totalTasks) * 100) : 0,
+            progress: p.count > 0 ? Math.round(p.sumPct / p.count) : 0,
             overdueTasks: p.overdueTasks || 0
         }));
     }, [plan]);
