@@ -7,16 +7,54 @@ import {
 } from 'lucide-react';
 import { API_ORIGIN } from '../../config';
 
+const SkeletonRow = () => (
+    <tr className="animate-pulse">
+        <td className="px-6 py-4">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-300 dark:bg-slate-800" />
+                <div className="flex flex-col gap-2">
+                    <div className="w-24 h-4 bg-slate-300 dark:bg-slate-800 rounded" />
+                    <div className="w-32 h-3 bg-slate-300 dark:bg-slate-800 rounded" />
+                </div>
+            </div>
+        </td>
+        <td className="px-6 py-4">
+            <div className="flex flex-col gap-2">
+                <div className="w-20 h-4 bg-slate-300 dark:bg-slate-800 rounded" />
+                <div className="w-16 h-3 bg-slate-300 dark:bg-slate-800 rounded" />
+            </div>
+        </td>
+        <td className="px-6 py-4">
+            <div className="flex justify-center">
+                <div className="w-16 h-6 bg-slate-300 dark:bg-slate-800 rounded-full" />
+            </div>
+        </td>
+        <td className="px-6 py-4">
+            <div className="flex justify-end gap-2">
+                <div className="w-8 h-8 bg-slate-300 dark:bg-slate-800 rounded-xl" />
+                <div className="w-8 h-8 bg-slate-300 dark:bg-slate-800 rounded-xl" />
+            </div>
+        </td>
+    </tr>
+);
+
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [filterDept, setFilterDept] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    // Pagination states
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -33,17 +71,43 @@ const UserManagement = () => {
     const departmentOptions = ['All Departments', ...departments];
     const roles = ['Admin', 'DepartmentHead', 'User'];
 
+    // Debounce search term
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+            setPage(1);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    // Fetch users when parameters change
     useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [page, debouncedSearchTerm, filterDept]);
 
     const fetchUsers = async () => {
         try {
             setLoading(true);
+            const token = localStorage.getItem('token');
             const res = await axios.get(`${API_ORIGIN}/api/users`, {
-                headers: { 'x-auth-token': localStorage.getItem('token') }
+                headers: { 'x-auth-token': token },
+                params: {
+                    page,
+                    limit,
+                    search: debouncedSearchTerm,
+                    department: filterDept
+                }
             });
-            setUsers(res.data);
+
+            if (res.data && res.data.data !== undefined) {
+                setUsers(res.data.data);
+                setTotalPages(res.data.totalPages || 1);
+                setTotalRecords(res.data.totalRecords || 0);
+            } else {
+                setUsers(Array.isArray(res.data) ? res.data : []);
+                setTotalPages(1);
+                setTotalRecords(Array.isArray(res.data) ? res.data.length : 0);
+            }
             setError('');
         } catch (err) {
             setError('Failed to load users');
@@ -105,17 +169,16 @@ const UserManagement = () => {
                     delete updateData.password;
                     delete updateData.confirmPassword;
                 }
-                const res = await axios.patch(`${API_ORIGIN}/api/users/${selectedUser._id}`, updateData, {
+                await axios.patch(`${API_ORIGIN}/api/users/${selectedUser._id}`, updateData, {
                     headers: { 'x-auth-token': token }
                 });
-                setUsers(users.map(u => u._id === selectedUser._id ? res.data : u));
             } else {
-                const res = await axios.post(`${API_ORIGIN}/api/users`, dataToSend, {
+                await axios.post(`${API_ORIGIN}/api/users`, dataToSend, {
                     headers: { 'x-auth-token': token }
                 });
-                setUsers([...users, res.data]);
             }
             setShowModal(false);
+            fetchUsers();
         } catch (err) {
             setError(err.response?.data?.message || 'Operation failed');
         } finally {
@@ -129,19 +192,16 @@ const UserManagement = () => {
             await axios.delete(`${API_ORIGIN}/api/users/${id}`, {
                 headers: { 'x-auth-token': localStorage.getItem('token') }
             });
-            setUsers(users.filter(u => u._id !== id));
+            fetchUsers();
         } catch (err) {
             alert('Failed to delete user');
         }
     };
 
-    const filteredUsers = users.filter(u => {
-        const matchesSearch = u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesDept = filterDept === 'all' || u.department === filterDept;
-        return matchesSearch && matchesDept;
-    });
+    const handleFilterDeptChange = (val) => {
+        setFilterDept(val);
+        setPage(1);
+    };
 
     return (
         <div className="space-y-6">
@@ -176,7 +236,7 @@ const UserManagement = () => {
                     <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                     <select
                         value={filterDept}
-                        onChange={(e) => setFilterDept(e.target.value)}
+                        onChange={(e) => handleFilterDeptChange(e.target.value)}
                         className="w-full bg-slate-900/50 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium appearance-none"
                     >
                         <option value="all">All Departments</option>
@@ -185,7 +245,7 @@ const UserManagement = () => {
                 </div>
                 <div className="glass-panel border-slate-200 dark:border-white/5 flex items-center justify-center gap-4 px-6 rounded-2xl">
                     <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Accounts</span>
-                    <span className="text-xl font-black text-slate-900 dark:text-white">{users.length}</span>
+                    <span className="text-xl font-black text-slate-900 dark:text-white">{totalRecords}</span>
                 </div>
             </div>
 
@@ -203,15 +263,10 @@ const UserManagement = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                             {loading ? (
-                                <tr>
-                                    <td colSpan="4" className="px-6 py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-                                            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Synchronizing User Base...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : filteredUsers.length === 0 ? (
+                                Array.from({ length: 5 }).map((_, idx) => (
+                                    <SkeletonRow key={idx} />
+                                ))
+                            ) : users.length === 0 ? (
                                 <tr>
                                     <td colSpan="4" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-3">
@@ -221,7 +276,7 @@ const UserManagement = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredUsers.map((user) => (
+                                users.map((user) => (
                                     <tr key={user._id} className="group hover:bg-indigo-500/[0.02] transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -279,6 +334,62 @@ const UserManagement = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {!loading && totalRecords > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/[0.02]">
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Showing <span className="text-slate-900 dark:text-white">{Math.min(totalRecords, (page - 1) * limit + 1)}-{Math.min(totalRecords, page * limit)}</span> of <span className="text-slate-900 dark:text-white">{totalRecords}</span> users
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={page === 1}
+                                onClick={() => setPage(page - 1)}
+                                className="px-4 py-2 bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed text-xs uppercase"
+                            >
+                                Previous
+                            </button>
+                            
+                            {Array.from({ length: totalPages }).map((_, i) => {
+                                const pageNum = i + 1;
+                                if (
+                                    pageNum === 1 ||
+                                    pageNum === totalPages ||
+                                    Math.abs(pageNum - page) <= 1
+                                ) {
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setPage(pageNum)}
+                                            className={`w-8 h-8 flex items-center justify-center font-bold rounded-xl text-xs transition-all ${
+                                                page === pageNum
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300'
+                                            }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                }
+                                if (
+                                    (pageNum === 2 && page > 3) ||
+                                    (pageNum === totalPages - 1 && page < totalPages - 2)
+                                ) {
+                                    return <span key={pageNum} className="text-slate-500 px-1 font-bold text-xs">...</span>;
+                                }
+                                return null;
+                            })}
+
+                            <button
+                                disabled={page === totalPages}
+                                onClick={() => setPage(page + 1)}
+                                className="px-4 py-2 bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed text-xs uppercase"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Create/Edit Modal */}

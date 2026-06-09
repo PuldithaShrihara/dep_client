@@ -74,7 +74,7 @@ const Login = () => {
                 <div className="glass-panel rounded-[32px] p-8 md:p-10 border border-slate-200/80 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(15,23,42,0.12)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]">
                     <div className="text-center mb-10">
                         <div className="inline-flex items-center justify-center mb-6 group transition-all duration-500 hover:scale-110">
-                            <img src="/fadna-logo.png" alt="Fadna" className="w-32 h-auto" />
+                            <img src="/fadna-logo.png" alt="Fadna" className="w-32 h-auto" loading="lazy" />
                         </div>
                         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
                             Portal <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">Access</span>

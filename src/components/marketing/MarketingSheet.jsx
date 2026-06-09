@@ -662,6 +662,7 @@ const MarketingSheet = ({
                                         src={activeProductImage} 
                                         alt={filterProduct}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                                        loading="lazy"
                                         onError={(e) => {
                                             e.target.style.display = 'none';
                                             e.target.nextSibling.style.display = 'flex';

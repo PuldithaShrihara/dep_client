@@ -73,6 +73,9 @@ const Dashboard = () => {
     const [selectedDept, setSelectedDept] = useState(null);
     const [activePlan, setActivePlan] = useState(null);
     const [plans, setPlans] = useState([]);
+    const [plansPage, setPlansPage] = useState(1);
+    const [hasMorePlans, setHasMorePlans] = useState(false);
+    const [loadingMorePlans, setLoadingMorePlans] = useState(false);
     const [showPlanModal, setShowPlanModal] = useState(!!initialDeptId);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [creatingPlan, setCreatingPlan] = useState(false);
@@ -338,21 +341,46 @@ const Dashboard = () => {
         fetchDepartments();
     }, []);
 
-    const fetchPlans = async (deptId) => {
-        setLoadingPlans(true);
+    const fetchPlans = async (deptId, pageNum = 1, append = false) => {
+        if (pageNum === 1) {
+            setLoadingPlans(true);
+        } else {
+            setLoadingMorePlans(true);
+        }
 
         try {
             const token = localStorage.getItem('token');
 
             const res = await axios.get(`${API_ORIGIN}/api/plans/department/${deptId}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                params: {
+                    page: pageNum,
+                    limit: 10
+                }
             });
 
-            setPlans(res.data);
+            if (res.data && res.data.data !== undefined) {
+                if (append) {
+                    setPlans(prev => {
+                        const existingIds = new Set(prev.map(p => p._id));
+                        const filtered = res.data.data.filter(p => !existingIds.has(p._id));
+                        return [...prev, ...filtered];
+                    });
+                } else {
+                    setPlans(res.data.data);
+                }
+                setHasMorePlans(res.data.hasNextPage);
+                setPlansPage(pageNum);
+            } else {
+                setPlans(Array.isArray(res.data) ? res.data : []);
+                setHasMorePlans(false);
+                setPlansPage(1);
+            }
         } catch (err) {
             console.error('Error fetching plans:', err.response?.data || err.message);
         } finally {
             setLoadingPlans(false);
+            setLoadingMorePlans(false);
         }
     };
 
@@ -390,7 +418,7 @@ const Dashboard = () => {
         
         if (planId && plans.length > 0) {
             const plan = plans.find(p => p._id === planId);
-            if (plan) {
+            if (plan && plan.tasks !== undefined && plan.rdMainTasks !== undefined) {
                 if (!activePlan || activePlan._id !== planId) {
                     setActivePlan(plan);
                 }
@@ -988,6 +1016,25 @@ const Dashboard = () => {
                                                         </div>
                                                     );
                                                 })}
+                                                {hasMorePlans && (
+                                                    <div className="pt-4 flex justify-center">
+                                                        <button
+                                                            type="button"
+                                                            disabled={loadingMorePlans}
+                                                            onClick={() => fetchPlans(selectedDept._id, plansPage + 1, true)}
+                                                            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed flex items-center gap-2"
+                                                        >
+                                                            {loadingMorePlans ? (
+                                                                <>
+                                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                                    <span>Loading...</span>
+                                                                </>
+                                                            ) : (
+                                                                <span>Load More Plans</span>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>

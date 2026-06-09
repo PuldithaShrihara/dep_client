@@ -441,6 +441,7 @@ const PlanDashboard = ({
                                                             src={getProductImageUrl(product.image)} 
                                                             alt={product.name}
                                                             className="w-full h-full object-cover"
+                                                            loading="lazy"
                                                         />
                                                     ) : (
                                                         <div className="flex h-full w-full items-center justify-center bg-indigo-500/10 text-indigo-300">

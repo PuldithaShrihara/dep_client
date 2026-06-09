@@ -1,17 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Unauthorized from './pages/Unauthorized';
-import AdminLayout from './layouts/AdminLayout';
-import UserManagement from "./components/admin/UserManagement.jsx";
-import HrTaskHub from "./pages/HrTaskHub.jsx";
-import NewEmployeeSheet from "./components/admin/NewEmployeeSheet.jsx";
-import InsuranceSheet from "./components/admin/InsuranceSheet.jsx";
-import ResignedEmployeeSheet from "./components/admin/ResignedEmployeeSheet.jsx";
 import { isAdmin, canViewAdminArea } from './utils/roles';
+
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Unauthorized = lazy(() => import('./pages/Unauthorized'));
+const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
+const UserManagement = lazy(() => import('./components/admin/UserManagement.jsx'));
+const HrTaskHub = lazy(() => import('./pages/HrTaskHub.jsx'));
+const NewEmployeeSheet = lazy(() => import('./components/admin/NewEmployeeSheet.jsx'));
+const InsuranceSheet = lazy(() => import('./components/admin/InsuranceSheet.jsx'));
+const ResignedEmployeeSheet = lazy(() => import('./components/admin/ResignedEmployeeSheet.jsx'));
 
 const NotFound = () => {
     return (
@@ -111,67 +112,69 @@ function App() {
                 <PathTracker />
                 <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     <Toaster position="top-right" />
-                    <Routes>
-                        <Route path="/" element={<HomeRoute />} />
-                        <Route path="/index.html" element={<HomeRoute />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route
-                            path="/dashboard"
-                            element={
-                                <PrivateRoute>
-                                    <Dashboard />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/profile"
-                            element={
-                                <PrivateRoute>
-                                    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-                                        <p className="text-lg font-bold">Profile</p>
-                                    </div>
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/appointments/:id"
-                            element={
-                                <PrivateRoute>
-                                    <AppointmentExamplePage />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/admin"
-                            element={
-                                <AdminRoute>
-                                    <AdminLayout />
-                                </AdminRoute>
-                            }
-                        >
-                            <Route index element={
-                                <SuperAdminRoute>
-                                    <UserManagement />
-                                </SuperAdminRoute>
-                            } />
-                            <Route path="hr" element={<HrTaskHub />} />
-                            <Route path="hr/new-employees" element={<NewEmployeeSheet />} />
-                            <Route path="hr/insurance" element={<InsuranceSheet />} />
-                            <Route path="hr/resigned-employees" element={<ResignedEmployeeSheet />} />
-                        </Route>
-                        <Route
-                            path="/hr"
-                            element={
-                                <AdminRoute>
-                                    <AdminLayout />
-                                </AdminRoute>
-                            }
-                        >
-                            <Route index element={<HrTaskHub />} />
-                        </Route>
-                        <Route path="/unauthorized" element={<Unauthorized />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <Suspense fallback={<AppLoading />}>
+                        <Routes>
+                            <Route path="/" element={<HomeRoute />} />
+                            <Route path="/index.html" element={<HomeRoute />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route
+                                path="/dashboard"
+                                element={
+                                    <PrivateRoute>
+                                        <Dashboard />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/profile"
+                                element={
+                                    <PrivateRoute>
+                                        <div className="min-h-screen flex items-center justify-center p-8 bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+                                            <p className="text-lg font-bold">Profile</p>
+                                        </div>
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/appointments/:id"
+                                element={
+                                    <PrivateRoute>
+                                        <AppointmentExamplePage />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/admin"
+                                element={
+                                    <AdminRoute>
+                                        <AdminLayout />
+                                    </AdminRoute>
+                                }
+                            >
+                                <Route index element={
+                                    <SuperAdminRoute>
+                                        <UserManagement />
+                                    </SuperAdminRoute>
+                                } />
+                                <Route path="hr" element={<HrTaskHub />} />
+                                <Route path="hr/new-employees" element={<NewEmployeeSheet />} />
+                                <Route path="hr/insurance" element={<InsuranceSheet />} />
+                                <Route path="hr/resigned-employees" element={<ResignedEmployeeSheet />} />
+                            </Route>
+                            <Route
+                                path="/hr"
+                                element={
+                                    <AdminRoute>
+                                        <AdminLayout />
+                                    </AdminRoute>
+                                }
+                            >
+                                <Route index element={<HrTaskHub />} />
+                            </Route>
+                            <Route path="/unauthorized" element={<Unauthorized />} />
+                            <Route path="*" element={<NotFound />} />
+                        </Routes>
+                    </Suspense>
                 </div>
             </Router>
         </AuthProvider>
