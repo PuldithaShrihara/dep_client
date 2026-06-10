@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
@@ -17,7 +17,7 @@ const getProductImageUrl = (imagePath) => {
     return `${PRODUCT_IMAGE_API_ORIGIN}${imagePath}`;
 };
 
-const AutoResizeTextarea = ({ value, onChange, placeholder, className, disabled }) => {
+const AutoResizeTextarea = ({ value, onChange, onBlur, placeholder, className, disabled }) => {
     const textareaRef = React.useRef(null);
 
     useEffect(() => {
@@ -32,6 +32,7 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className, disabled 
             ref={textareaRef}
             value={value}
             onChange={onChange}
+            onBlur={onBlur}
             disabled={disabled}
             placeholder={placeholder}
             rows="1"
@@ -66,6 +67,35 @@ const formatDateTimeValue = (value) => {
 };
 
 const formatDateValue = (value) => normalizeDate(value) || '';
+
+const formatDateForInput = (dateStr) => {
+    if (!dateStr) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
+    let date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+        const parts = dateStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+            if (parts[2].length === 4) {
+                const month = parseInt(parts[0], 10);
+                const day = parseInt(parts[1], 10);
+                const year = parseInt(parts[2], 10);
+                date = new Date(year, month - 1, day);
+            } else if (parts[0].length === 4) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const day = parseInt(parts[2], 10);
+                date = new Date(year, month - 1, day);
+            }
+        }
+    }
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
 
 const getCompletionDateValue = (task) => task.dateCompleted || task.completedTime || '';
 
@@ -158,21 +188,32 @@ const MarketingSheet = ({
     const [filterChannel, setFilterChannel] = useState('All Channels');
     const [filterStatus, setFilterStatus] = useState('All Status');
 
+    const lastSyncedTasksRef = useRef(null);
+    const isAutoSavingRef = useRef(false);
+
     useEffect(() => {
         if (!isNew && planId) {
-            setPlanData({
-                title: initialTitle || '',
-                month: initialMonth || '',
-                year: initialYear || new Date().getFullYear(),
-                target: initialTarget || '',
-                description: initialDescription || ''
-            });
-            setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(40).fill({
-                product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
-                description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
-                startDate: '', endDate: '', notes: '', completedBy: '',
-                completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
-            }).map(row => ({ ...row })));
+            if (isAutoSavingRef.current) {
+                lastSyncedTasksRef.current = initialTasks;
+                isAutoSavingRef.current = false;
+                return;
+            }
+            if (initialTasks !== lastSyncedTasksRef.current) {
+                setPlanData({
+                    title: initialTitle || '',
+                    month: initialMonth || '',
+                    year: initialYear || new Date().getFullYear(),
+                    target: initialTarget || '',
+                    description: initialDescription || ''
+                });
+                setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(40).fill({
+                    product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+                    description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
+                    startDate: '', endDate: '', notes: '', completedBy: '',
+                    completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
+                }).map(row => ({ ...row })));
+                lastSyncedTasksRef.current = initialTasks;
+            }
         }
     }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
 
@@ -208,6 +249,80 @@ const MarketingSheet = ({
         }));
     };
 
+    const handleAutoSave = async (tasksToSave) => {
+        if (isNew || !planId) return;
+        isAutoSavingRef.current = true;
+        setSaving(true);
+        try {
+            const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
+                tasks: tasksToSave.filter(t => 
+                    t.product?.trim() || 
+                    t.description?.trim() || 
+                    t.mainGoal?.trim() || 
+                    t.mediaType?.trim() ||
+                    t._isSubtask
+                ),
+                ...planData
+            }, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            });
+            if (onSuccess) onSuccess(res.data);
+        } catch (err) {
+            console.error('Auto-save failed:', err);
+            isAutoSavingRef.current = false;
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleMetadataChange = (key, value) => {
+        setPlanData(prev => {
+            const next = { ...prev, [key]: value };
+            if (key === 'month') {
+                setTimeout(() => {
+                    if (!isNew && planId) {
+                        isAutoSavingRef.current = true;
+                        setSaving(true);
+                        axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
+                            tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim() || t.mediaType?.trim() || t._isSubtask),
+                            ...next
+                        }, {
+                            headers: { 'x-auth-token': localStorage.getItem('token') }
+                        }).then(res => {
+                            if (onSuccess) onSuccess(res.data);
+                        }).catch(err => {
+                            console.error('Metadata auto-save failed:', err);
+                            isAutoSavingRef.current = false;
+                        }).finally(() => {
+                            setSaving(false);
+                        });
+                    }
+                }, 0);
+            }
+            return next;
+        });
+    };
+
+    const handleMetadataBlur = () => {
+        if (!isNew && planId) {
+            isAutoSavingRef.current = true;
+            setSaving(true);
+            axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
+                tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim() || t.mediaType?.trim() || t._isSubtask),
+                ...planData
+            }, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            }).then(res => {
+                if (onSuccess) onSuccess(res.data);
+            }).catch(err => {
+                console.error('Metadata auto-save failed:', err);
+                isAutoSavingRef.current = false;
+            }).finally(() => {
+                setSaving(false);
+            });
+        }
+    };
+
     const handleAddSubtask = (idx) => {
         let insertIndex = idx + 1;
         while (insertIndex < tasks.length) {
@@ -233,6 +348,7 @@ const MarketingSheet = ({
             ...tasks.slice(insertIndex)
         ];
         setTasks(newTasks);
+        setTimeout(() => handleAutoSave(newTasks), 0);
     };
 
     // Helper to calculate main task completion percentage (fractional if has subtasks)
@@ -435,25 +551,31 @@ const MarketingSheet = ({
             }
 
             next[index] = updatedTask;
+            if (key === 'done' || key === 'status' || key === 'priority') {
+                setTimeout(() => handleAutoSave(next), 0);
+            }
             return next;
         });
     };
 
     const addRow = () => {
-        setTasks([...tasks, {
+        const newTasks = [...tasks, {
             product: '', 
             assets: filterProduct || '', // Link to parent product
             mediaType: '', marketingChannel: '', mainGoal: '', done: false,
             description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
             startDate: '', endDate: '', notes: '', completedBy: '',
             completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
-        }]);
+        }];
+        setTasks(newTasks);
+        setTimeout(() => handleAutoSave(newTasks), 0);
     };
 
     const removeRow = (index) => {
         if (tasks.length === 1) return;
         const newTasks = tasks.filter((_, i) => i !== index);
         setTasks(newTasks);
+        setTimeout(() => handleAutoSave(newTasks), 0);
     };
 
     const getStatusStyles = (status) => {
@@ -588,7 +710,8 @@ const MarketingSheet = ({
                                     <input
                                         className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={planData.title}
-                                        onChange={(e) => setPlanData({ ...planData, title: e.target.value })}
+                                        onChange={(e) => handleMetadataChange('title', e.target.value)}
+                                        onBlur={handleMetadataBlur}
                                         disabled={readOnly}
                                     />
                                 </div>
@@ -598,7 +721,7 @@ const MarketingSheet = ({
                                 <select
                                     className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     value={planData.month}
-                                    onChange={(e) => setPlanData({ ...planData, month: e.target.value })}
+                                    onChange={(e) => handleMetadataChange('month', e.target.value)}
                                     disabled={readOnly}
                                 >
                                     <option value="">Select...</option>
@@ -613,7 +736,8 @@ const MarketingSheet = ({
                                     type="number"
                                     className="w-full bg-slate-50 dark:bg-[#1a1f2e] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                     value={planData.year}
-                                    onChange={(e) => setPlanData({ ...planData, year: e.target.value })}
+                                    onChange={(e) => handleMetadataChange('year', e.target.value)}
+                                    onBlur={handleMetadataBlur}
                                     disabled={readOnly}
                                 />
                             </div>
@@ -936,6 +1060,7 @@ const MarketingSheet = ({
                                                             <AutoResizeTextarea
                                                                 value={isSubtask && filterProduct ? task.mediaType : task[col.key]}
                                                                 onChange={(e) => handleInputChange(idx, isSubtask && filterProduct ? 'mediaType' : col.key, e.target.value)}
+                                                                onBlur={() => handleAutoSave(tasks)}
                                                                 disabled={readOnly}
                                                                 placeholder={isSubtask ? "Subtask details..." : "Enter goal/objective..."}
                                                                 className={`${isSubtask ? 'text-slate-500 font-medium' : 'font-bold'} ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
@@ -1031,8 +1156,9 @@ const MarketingSheet = ({
                                                 ) : col.key === 'startDate' || col.key === 'endDate' ? (
                                                     <input
                                                         type="date"
-                                                        value={task[col.key]}
+                                                        value={formatDateForInput(task[col.key])}
                                                         onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
+                                                        onBlur={() => handleAutoSave(tasks)}
                                                         disabled={readOnly}
                                                         className={`w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark] outline-none ${readOnly ? 'cursor-not-allowed opacity-80' : ''}`}
                                                     />
@@ -1052,6 +1178,7 @@ const MarketingSheet = ({
                                                     <AutoResizeTextarea
                                                         value={task[col.key]}
                                                         onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
+                                                        onBlur={() => handleAutoSave(tasks)}
                                                         disabled={readOnly}
                                                         className={`${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
                                                     />

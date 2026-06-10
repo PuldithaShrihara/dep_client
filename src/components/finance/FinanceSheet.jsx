@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
     Save, Plus, Trash2, CheckCircle, Circle, User, Calendar,
@@ -111,16 +111,21 @@ const FinanceSheet = ({
     const [tasks, setTasks] = useState(getInitialTasks());
     const [saving, setSaving] = useState(false);
 
+    const lastSyncedTasksRef = useRef(null);
+
     useEffect(() => {
         if (!isNew && planId) {
-            setPlanData({
-                title: initialTitle || '',
-                month: initialMonth || '',
-                year: initialYear || new Date().getFullYear(),
-                target: initialTarget || '',
-                description: initialDescription || ''
-            });
-            setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : getInitialTasks());
+            if (initialTasks !== lastSyncedTasksRef.current) {
+                setPlanData({
+                    title: initialTitle || '',
+                    month: initialMonth || '',
+                    year: initialYear || new Date().getFullYear(),
+                    target: initialTarget || '',
+                    description: initialDescription || ''
+                });
+                setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : getInitialTasks());
+                lastSyncedTasksRef.current = initialTasks;
+            }
         }
     }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
 

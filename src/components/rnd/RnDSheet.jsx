@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
@@ -158,6 +158,35 @@ const EmployeeMultiSelect = ({ value, onChange, employees }) => {
     );
 };
 
+const formatDateForInput = (dateStr) => {
+    if (!dateStr) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
+    let date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+        const parts = dateStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+            if (parts[2].length === 4) {
+                const month = parseInt(parts[0], 10);
+                const day = parseInt(parts[1], 10);
+                const year = parseInt(parts[2], 10);
+                date = new Date(year, month - 1, day);
+            } else if (parts[0].length === 4) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const day = parseInt(parts[2], 10);
+                date = new Date(year, month - 1, day);
+            }
+        }
+    }
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
 const RnDSheet = ({ 
     planId, 
     initialTasks = [], 
@@ -196,27 +225,34 @@ const RnDSheet = ({
         fetchEmployees();
     }, []);
 
-    const resolvedTasks = initialRdMainTasks?.length > 0 
-        ? flattenNestedRdTasksToLegacy(initialRdMainTasks) 
-        : initialTasks;
+    const resolvedTasks = useMemo(() => {
+        return initialRdMainTasks?.length > 0 
+            ? flattenNestedRdTasksToLegacy(initialRdMainTasks) 
+            : initialTasks;
+    }, [initialRdMainTasks, initialTasks]);
+
+    const lastSyncedTasksRef = useRef(null);
 
     useEffect(() => {
         if (!isNew && planId) {
-            setPlanData({
-                title: initialTitle || '',
-                month: initialMonth || '',
-                year: initialYear || new Date().getFullYear(),
-                target: initialTarget || '',
-                description: initialDescription || ''
-            });
-            setTasks(resolvedTasks && resolvedTasks.length > 0 ? resolvedTasks : Array(40).fill({
-                product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
-                description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
-                startDate: '', endDate: '', notes: '', completedBy: '',
-                completedTime: '', reportTo: ''
-            }).map(row => ({ ...row })));
+            if (resolvedTasks !== lastSyncedTasksRef.current) {
+                setPlanData({
+                    title: initialTitle || '',
+                    month: initialMonth || '',
+                    year: initialYear || new Date().getFullYear(),
+                    target: initialTarget || '',
+                    description: initialDescription || ''
+                });
+                setTasks(resolvedTasks && resolvedTasks.length > 0 ? resolvedTasks : Array(40).fill({
+                    product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+                    description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
+                    startDate: '', endDate: '', notes: '', completedBy: '',
+                    completedTime: '', reportTo: ''
+                }).map(row => ({ ...row })));
+                lastSyncedTasksRef.current = resolvedTasks;
+            }
         }
-    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, isNew, initialRdMainTasks, initialTasks]);
+    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, isNew, resolvedTasks]);
 
     const [tasks, setTasks] = useState(resolvedTasks?.length > 0 ? resolvedTasks : Array(40).fill({
         product: '',      // Task
@@ -646,7 +682,7 @@ const RnDSheet = ({
                                 <td className="p-1">
                                     <input
                                         type="date"
-                                        value={task.startDate}
+                                        value={formatDateForInput(task.startDate)}
                                         onChange={(e) => handleInputChange(idx, 'startDate', e.target.value)}
                                         className="w-full bg-transparent border-none focus:ring-0 text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1 [color-scheme:dark]"
                                     />
@@ -654,7 +690,7 @@ const RnDSheet = ({
                                 <td className="p-1">
                                     <input
                                         type="date"
-                                        value={task.endDate}
+                                        value={formatDateForInput(task.endDate)}
                                         onChange={(e) => handleInputChange(idx, 'endDate', e.target.value)}
                                         className="w-full bg-transparent border-none focus:ring-0 text-[15px] text-slate-900 dark:text-slate-200 px-2 py-1 [color-scheme:dark]"
                                     />

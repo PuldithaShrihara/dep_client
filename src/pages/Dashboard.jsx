@@ -341,9 +341,11 @@ const Dashboard = () => {
         fetchDepartments();
     }, []);
 
-    const fetchPlans = async (deptId, pageNum = 1, append = false) => {
+    const fetchPlans = async (deptId, pageNum = 1, append = false, showSpinner = true) => {
         if (pageNum === 1) {
-            setLoadingPlans(true);
+            if (showSpinner) {
+                setLoadingPlans(true);
+            }
         } else {
             setLoadingMorePlans(true);
         }
@@ -417,6 +419,29 @@ const Dashboard = () => {
         const product = searchParams.get('product');
         
         if (planId && plans.length > 0) {
+            // Check if activePlan is already set to the current planId and fully loaded.
+            // If so, do not fetch or reset activePlan to prevent unneeded resets!
+            if (activePlan && activePlan._id === planId && activePlan.tasks !== undefined) {
+                if (selectedDept?.name === 'Marketing') {
+                    if (product) {
+                        if (activeProductFilter !== product) {
+                            setActiveProductFilter(product);
+                            setIsEditingSheet(true);
+                        }
+                    } else {
+                        if (activeProductFilter !== null || isEditingSheet !== false) {
+                            setIsEditingSheet(false);
+                            setActiveProductFilter(null);
+                        }
+                    }
+                } else {
+                    if (!isEditingSheet) {
+                        setIsEditingSheet(true);
+                    }
+                }
+                return;
+            }
+
             const plan = plans.find(p => p._id === planId);
             if (plan && plan.tasks !== undefined && plan.rdMainTasks !== undefined) {
                 if (!activePlan || activePlan._id !== planId) {
@@ -865,7 +890,7 @@ const Dashboard = () => {
                                             deptId={selectedDept?._id}
                                             readOnly={!canEditDepartment(user, selectedDept?.name)}
                                             onSuccess={(updatedPlan) => {
-                                                fetchPlans(selectedDept._id);
+                                                fetchPlans(selectedDept._id, 1, false, false);
                                                 fetchDepartments();
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
@@ -891,7 +916,7 @@ const Dashboard = () => {
                                             deptId={selectedDept?._id}
                                             readOnly={!canEditDepartment(user, selectedDept?.name)}
                                             onSuccess={(updatedPlan) => {
-                                                fetchPlans(selectedDept._id);
+                                                fetchPlans(selectedDept._id, 1, false, false);
                                                 fetchDepartments();
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
@@ -912,7 +937,7 @@ const Dashboard = () => {
                                             deptId={selectedDept?._id}
                                             readOnly={!canEditDepartment(user, selectedDept?.name)}
                                             onSuccess={(updatedPlan) => {
-                                                fetchPlans(selectedDept._id);
+                                                fetchPlans(selectedDept._id, 1, false, false);
                                                 fetchDepartments();
                                                 setShowCreateForm(false);
                                                 setActivePlan(updatedPlan);
