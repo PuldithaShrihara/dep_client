@@ -206,7 +206,7 @@ const MarketingSheet = ({
                     target: initialTarget || '',
                     description: initialDescription || ''
                 });
-                setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(40).fill({
+                setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(10).fill({
                     product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
                     description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
                     startDate: '', endDate: '', notes: '', completedBy: '',
@@ -217,7 +217,7 @@ const MarketingSheet = ({
         }
     }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
 
-    const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : Array(40).fill({
+    const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : Array(10).fill({
         product: '',
         mediaType: '',
         marketingChannel: '',
@@ -488,20 +488,20 @@ const MarketingSheet = ({
 
     const columns = useMemo(() => [
         { key: 'product', label: filterProduct ? 'Campaign / Subtask' : 'Product', icon: <ChevronDown size={14} />, width: filterProduct ? 'w-80' : 'w-40' },
-        { key: 'marketingChannel', label: 'Channel', icon: <ChevronDown size={14} />, width: 'w-40' },
-        { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-56' },
-        { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-20' },
-        { key: 'owner', label: 'Responsibility', icon: <User size={14} />, width: 'w-40' },
-        { key: 'duration', label: 'Duration', icon: <Clock size={14} />, width: 'w-28' },
-        { key: 'startDate', label: 'Start Date', icon: <Calendar size={14} />, width: 'w-36' },
-        { key: 'endDate', label: 'End Date', icon: <Calendar size={14} />, width: 'w-36' },
-        { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-44' },
-        { key: 'priority', label: 'Priority', icon: <MoreHorizontal size={14} />, width: 'w-28' },
-        { key: 'attachments', label: 'Attachments', icon: <File size={14} />, width: 'w-48' },
-        { key: 'notes', label: 'Notes', icon: <FileText size={14} />, width: 'w-64' },
-        { key: 'completedTime', label: 'Date Completed', icon: <Clock size={14} />, width: 'w-40' },
-        { key: 'description', label: 'Description', icon: <FileText size={14} />, width: 'w-64' },
-        { key: 'outcome', label: 'Outcome', icon: <Target size={14} />, width: 'w-56' }
+        { key: 'marketingChannel', label: 'Channel', icon: <ChevronDown size={14} />, width: 'w-28' },
+        { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-32' },
+        { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-16' },
+        { key: 'owner', label: 'Responsibility', icon: <User size={14} />, width: 'w-28' },
+        { key: 'duration', label: 'Duration', icon: <Clock size={14} />, width: 'w-16' },
+        { key: 'startDate', label: 'Start Date', icon: <Calendar size={14} />, width: 'w-28' },
+        { key: 'endDate', label: 'End Date', icon: <Calendar size={14} />, width: 'w-28' },
+        { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-28' },
+        { key: 'priority', label: 'Priority', icon: <MoreHorizontal size={14} />, width: 'w-20' },
+        { key: 'attachments', label: 'Attachments', icon: <File size={14} />, width: 'w-28' },
+        { key: 'notes', label: 'Notes', icon: <FileText size={14} />, width: 'w-40' },
+        { key: 'completedTime', label: 'Date Completed', icon: <Clock size={14} />, width: 'w-28' },
+        { key: 'description', label: 'Description', icon: <FileText size={14} />, width: 'w-40' },
+        { key: 'outcome', label: 'Outcome', icon: <Target size={14} />, width: 'w-36' }
     ], [filterProduct]);
 
     const handleInputChange = (index, key, value) => {
