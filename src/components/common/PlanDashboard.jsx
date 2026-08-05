@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import axios from 'axios';
 import { 
     Layout, Package, ListTodo, Target, Clock, Edit3, Trash2, 
     ChevronRight, Plus, TrendingUp, ArrowLeft, BarChart3, X, CheckCircle
@@ -28,6 +29,23 @@ const PlanDashboard = ({
     const [isEditPlanModalOpen, setIsEditPlanModalOpen] = useState(false);
     const [newProductData, setNewProductData] = useState({ name: '', description: '', imageFile: null, category: '' });
     const [editPlanData, setEditPlanData] = useState({ title: plan?.title || '', month: plan?.month || '' });
+    const [productMetrics, setProductMetrics] = useState([]);
+
+    useEffect(() => {
+        if (!plan?.month || !plan?.year) return;
+        const fetchAllMetrics = async () => {
+            try {
+                const res = await axios.get(`${API_ORIGIN}/api/products/metrics`, {
+                    params: { month: plan.month, year: plan.year },
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+                setProductMetrics(res.data);
+            } catch (err) {
+                console.error('Failed to load all product metrics', err);
+            }
+        };
+        fetchAllMetrics();
+    }, [plan?.month, plan?.year]);
 
     // Group tasks by product to show in the products tab
     const products = useMemo(() => {
@@ -50,7 +68,7 @@ const PlanDashboard = ({
         if (plan.products && plan.products.length > 0) {
             plan.products.forEach(p => {
                 const key = String(p.name).trim().toLowerCase();
-                const metrics = (plan.productMetrics || []).find(m => m.productId === p._id) || {};
+                const metrics = productMetrics.find(m => m.productId === p._id) || {};
                 productMap[key] = {
                     name: p.name,
                     category: p.category || 'Campaign',
@@ -174,7 +192,7 @@ const PlanDashboard = ({
             progress: p.count > 0 ? Math.round(p.sumPct / p.count) : 0,
             overdueTasks: p.overdueTasks || 0
         }));
-    }, [plan]);
+    }, [plan, productMetrics]);
 
     if (!plan) return null;
 

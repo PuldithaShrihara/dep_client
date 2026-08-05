@@ -881,7 +881,6 @@ const Dashboard = () => {
                                             planId={activePlan?._id}
                                             initialTasks={activePlan?.tasks || []}
                                             initialProducts={activePlan?.products || []}
-                                            initialProductMetrics={activePlan?.productMetrics || []}
                                             initialTitle={activePlan?.title || ''}
                                             initialMonth={activePlan?.month || ''}
                                             initialYear={activePlan?.year || new Date().getFullYear()}

@@ -177,7 +177,6 @@ const MarketingSheet = ({
     initialYear = new Date().getFullYear(), 
     initialTarget = '', 
     initialDescription = '',
-    initialProductMetrics = [],
     filterProduct = null, // New prop for filtering
     readOnly = false
 }) => {
@@ -186,8 +185,7 @@ const MarketingSheet = ({
         month: initialMonth,
         year: initialYear,
         target: initialTarget,
-        description: initialDescription,
-        productMetrics: initialProductMetrics
+        description: initialDescription
     });
     const [activeTab, setActiveTab] = useState('table');
     const [filterChannel, setFilterChannel] = useState('All Channels');
@@ -209,8 +207,7 @@ const MarketingSheet = ({
                     month: initialMonth || '',
                     year: initialYear || new Date().getFullYear(),
                     target: initialTarget || '',
-                    description: initialDescription || '',
-                    productMetrics: initialProductMetrics || []
+                    description: initialDescription || ''
                 });
                 setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(10).fill({
                     product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
@@ -221,7 +218,7 @@ const MarketingSheet = ({
                 lastSyncedTasksRef.current = initialTasks;
             }
         }
-    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialProductMetrics, initialTasks, isNew]);
+    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
 
     const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : Array(10).fill({
         product: '',
@@ -696,34 +693,77 @@ const MarketingSheet = ({
 
     const currentProduct = filterProduct ? initialProducts?.find(p => p.name === filterProduct) : null;
     const currentProductId = currentProduct?._id;
-    const currentProductMetrics = (planData.productMetrics || []).find(m => m.productId === currentProductId) || { monthlyBudget: '', monthlyTarget: '' };
+
+    // Dedicated Product Metrics State
+    const [metrics, setMetrics] = useState({ monthlyBudget: '', monthlyTarget: '' });
+    const [metricSaveStatus, setMetricSaveStatus] = useState('idle');
+    const metricSaveTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        if (!currentProductId || !planData.month || !planData.year || !planId) return;
+        
+        const fetchMetrics = async () => {
+            try {
+                const res = await axios.get(`${API_ORIGIN}/api/products/${currentProductId}/metrics`, {
+                    params: { month: planData.month, year: planData.year },
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+                setMetrics({
+                    monthlyBudget: res.data.monthlyBudget || '',
+                    monthlyTarget: res.data.monthlyTarget || ''
+                });
+            } catch (err) {
+                console.error('Failed to load product metrics', err);
+            }
+        };
+        fetchMetrics();
+    }, [currentProductId, planData.month, planData.year, planId]);
 
     const handleProductMetricChange = (field, value) => {
         if (!currentProductId) return;
-        setPlanData(prev => {
-            const metrics = [...(prev.productMetrics || [])];
-            const index = metrics.findIndex(m => m.productId === currentProductId);
-            if (index >= 0) {
-                metrics[index] = { ...metrics[index], [field]: value };
-            } else {
-                metrics.push({ productId: currentProductId, monthlyBudget: '', monthlyTarget: '', [field]: value });
-            }
-            return { ...prev, productMetrics: metrics };
-        });
-
-        if (autoSaveTimeoutRef.current) {
-            clearTimeout(autoSaveTimeoutRef.current);
+        
+        // Update local state immediately so user sees their input
+        setMetrics(prev => ({ ...prev, [field]: value }));
+        
+        // Debounce backend save
+        if (metricSaveTimeoutRef.current) {
+            clearTimeout(metricSaveTimeoutRef.current);
         }
-        autoSaveTimeoutRef.current = setTimeout(() => {
-            if (!readOnly && planId) {
-                handleAutoSave(tasks);
+        
+        setMetricSaveStatus('saving');
+        
+        metricSaveTimeoutRef.current = setTimeout(async () => {
+            if (readOnly || !planId) return;
+            try {
+                // Ensure we get the latest state value inside the timeout
+                setMetrics(currentMetrics => {
+                    axios.put(`${API_ORIGIN}/api/products/${currentProductId}/metrics`, {
+                        month: planData.month,
+                        year: planData.year,
+                        ...currentMetrics
+                    }, {
+                        headers: { 'x-auth-token': localStorage.getItem('token') }
+                    }).then(() => {
+                        setMetricSaveStatus('saved');
+                        setTimeout(() => setMetricSaveStatus('idle'), 2000);
+                    }).catch(err => {
+                        console.error('Failed to save metrics', err);
+                        setMetricSaveStatus('error');
+                        // Retain value on error as required
+                    });
+                    return currentMetrics;
+                });
+            } catch (err) {
+                setMetricSaveStatus('error');
             }
         }, 1000);
     };
 
     const handleProductMetricBlur = () => {
-        if (!readOnly && planId) {
-            handleAutoSave(tasks);
+        // Blur triggers immediately if there's a pending change
+        if (metricSaveStatus === 'saving') {
+            if (metricSaveTimeoutRef.current) clearTimeout(metricSaveTimeoutRef.current);
+            handleProductMetricChange(null, null); // Just trigger the save logic with current state
         }
     };
 
@@ -905,35 +945,44 @@ const MarketingSheet = ({
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Monthly Budget</p>
                                 {readOnly ? (
                                     <h3 className="text-3xl font-black text-white leading-none">
-                                        {currentProductMetrics.monthlyBudget || 'Not set'}
+                                        {metrics.monthlyBudget || 'Not set'}
                                     </h3>
                                 ) : (
                                     <input 
                                         type="text"
                                         placeholder="Not set"
-                                        value={currentProductMetrics.monthlyBudget}
+                                        value={metrics.monthlyBudget}
                                         onChange={(e) => handleProductMetricChange('monthlyBudget', e.target.value)}
                                         onBlur={handleProductMetricBlur}
-                                        className="w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b border-transparent hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl"
+                                        className={`w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl ${metricSaveStatus === 'error' ? 'border-red-500' : 'border-transparent'}`}
                                     />
                                 )}
                             </div>
                             <div className="w-px h-10 bg-white/10" />
-                            <div className="text-center group">
+                            <div className="text-center group relative">
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Monthly Target</p>
                                 {readOnly ? (
                                     <h3 className="text-3xl font-black text-white leading-none">
-                                        {currentProductMetrics.monthlyTarget || 'Not set'}
+                                        {metrics.monthlyTarget || 'Not set'}
                                     </h3>
                                 ) : (
                                     <input 
                                         type="text"
                                         placeholder="Not set"
-                                        value={currentProductMetrics.monthlyTarget}
+                                        value={metrics.monthlyTarget}
                                         onChange={(e) => handleProductMetricChange('monthlyTarget', e.target.value)}
                                         onBlur={handleProductMetricBlur}
-                                        className="w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b border-transparent hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl"
+                                        className={`w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl ${metricSaveStatus === 'error' ? 'border-red-500' : 'border-transparent'}`}
                                     />
+                                )}
+                                {metricSaveStatus === 'saving' && (
+                                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] text-indigo-400 font-bold uppercase animate-pulse">Saving...</span>
+                                )}
+                                {metricSaveStatus === 'saved' && (
+                                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] text-emerald-400 font-bold uppercase">Saved</span>
+                                )}
+                                {metricSaveStatus === 'error' && (
+                                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] text-red-500 font-bold uppercase">Save Failed</span>
                                 )}
                             </div>
                         </div>
