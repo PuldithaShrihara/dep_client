@@ -945,13 +945,13 @@ const MarketingSheet = ({
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Monthly Budget</p>
                                 {readOnly ? (
                                     <h3 className="text-3xl font-black text-white leading-none">
-                                        {metrics.monthlyBudget || 'Not set'}
+                                        {(metrics.monthlyBudget !== null && metrics.monthlyBudget !== '') ? metrics.monthlyBudget : 'Not set'}
                                     </h3>
                                 ) : (
                                     <input 
-                                        type="text"
+                                        type="number"
                                         placeholder="Not set"
-                                        value={metrics.monthlyBudget}
+                                        value={metrics.monthlyBudget === null ? '' : metrics.monthlyBudget}
                                         onChange={(e) => handleProductMetricChange('monthlyBudget', e.target.value)}
                                         onBlur={handleProductMetricBlur}
                                         className={`w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl ${metricSaveStatus === 'error' ? 'border-red-500' : 'border-transparent'}`}
@@ -963,13 +963,13 @@ const MarketingSheet = ({
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Monthly Target</p>
                                 {readOnly ? (
                                     <h3 className="text-3xl font-black text-white leading-none">
-                                        {metrics.monthlyTarget || 'Not set'}
+                                        {(metrics.monthlyTarget !== null && metrics.monthlyTarget !== '') ? metrics.monthlyTarget : 'Not set'}
                                     </h3>
                                 ) : (
                                     <input 
-                                        type="text"
+                                        type="number"
                                         placeholder="Not set"
-                                        value={metrics.monthlyTarget}
+                                        value={metrics.monthlyTarget === null ? '' : metrics.monthlyTarget}
                                         onChange={(e) => handleProductMetricChange('monthlyTarget', e.target.value)}
                                         onBlur={handleProductMetricBlur}
                                         className={`w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl ${metricSaveStatus === 'error' ? 'border-red-500' : 'border-transparent'}`}

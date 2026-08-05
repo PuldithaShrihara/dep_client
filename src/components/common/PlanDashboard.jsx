@@ -76,8 +76,8 @@ const PlanDashboard = ({
                     count: 0,
                     overdueTasks: 0,
                     image: p.image || p.imageUrl || null,
-                    monthlyBudget: metrics.monthlyBudget || '',
-                    monthlyTarget: metrics.monthlyTarget || ''
+                    monthlyBudget: metrics.monthlyBudget !== undefined ? metrics.monthlyBudget : null,
+                    monthlyTarget: metrics.monthlyTarget !== undefined ? metrics.monthlyTarget : null
                 };
             });
         }
@@ -486,11 +486,11 @@ const PlanDashboard = ({
                                                     <div className="flex items-center gap-6 mt-2">
                                                         <div>
                                                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Monthly Budget</p>
-                                                            <p className="text-sm font-bold text-slate-300">{product.monthlyBudget || 'Not set'}</p>
+                                                            <p className="text-sm font-bold text-slate-300">{(product.monthlyBudget !== null && product.monthlyBudget !== '') ? product.monthlyBudget : 'Not set'}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Monthly Target</p>
-                                                            <p className="text-sm font-bold text-slate-300">{product.monthlyTarget || 'Not set'}</p>
+                                                            <p className="text-sm font-bold text-slate-300">{(product.monthlyTarget !== null && product.monthlyTarget !== '') ? product.monthlyTarget : 'Not set'}</p>
                                                         </div>
                                                     </div>
                                                 </div>
