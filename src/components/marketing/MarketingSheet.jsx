@@ -651,7 +651,7 @@ const MarketingSheet = ({
     };
 
     return (
-        <div className="flex flex-col min-h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
+        <div className="flex flex-col min-h-full w-full min-w-max bg-white dark:bg-[#0a0f1d] rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
             {!filterProduct && (
                 <Header 
                     title="Marketing Department" 

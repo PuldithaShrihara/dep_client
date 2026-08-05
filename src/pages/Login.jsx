@@ -70,16 +70,16 @@ const Login = () => {
             <div className="absolute top-1/2 left-10 w-4 h-4 bg-pink-400/25 dark:bg-pink-500/20 rounded-full blur-sm" />
 
             {/* Login Container */}
-            <div className="relative w-full max-w-[440px] entrance-animation">
-                <div className="glass-panel rounded-[32px] p-8 md:p-10 border border-slate-200/80 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(15,23,42,0.12)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]">
-                    <div className="text-center mb-10">
-                        <div className="inline-flex items-center justify-center mb-6 group transition-all duration-500 hover:scale-110">
-                            <img src="/fadna-logo.png" alt="Fadna" className="w-32 h-auto" loading="lazy" />
+            <div className="relative w-[90%] max-w-[470px] entrance-animation">
+                <div className="glass-panel rounded-[32px] px-[22px] py-[28px] md:px-[42px] md:py-[38px] border border-slate-200/80 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(15,23,42,0.12)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] h-auto">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center mb-5 group transition-all duration-500 hover:scale-110">
+                            <img src="/fadna-logo.png" alt="Fadna" className="w-[140px] h-auto" loading="lazy" />
                         </div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
+                        <h1 className="text-[34px] md:text-[42px] font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
                             Portal <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">Access</span>
                         </h1>
-                        <p className="text-slate-600 dark:text-slate-400 font-medium">Department Plan Monitoring System</p>
+                        <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Department Plan Monitoring System</p>
                     </div>
 
                     {error && (
@@ -89,7 +89,7 @@ const Login = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
                             <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Identity</label>
                             <div className="relative group">
@@ -98,7 +98,7 @@ const Login = () => {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:bg-slate-900/30 dark:border-white/5 dark:placeholder:text-slate-600 dark:text-slate-200"
+                                    className="w-full h-[60px] pl-12 pr-4 text-[17px] bg-white border border-slate-200 rounded-[16px] focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:bg-slate-900/30 dark:border-white/5 dark:placeholder:text-slate-600 dark:text-slate-200"
                                     placeholder="Username"
                                     required
                                 />
@@ -113,7 +113,7 @@ const Login = () => {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:bg-slate-900/30 dark:border-white/5 dark:placeholder:text-slate-600 dark:text-slate-200"
+                                    className="w-full h-[60px] pl-12 pr-4 text-[17px] bg-white border border-slate-200 rounded-[16px] focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-400 text-slate-900 dark:bg-slate-900/30 dark:border-white/5 dark:placeholder:text-slate-600 dark:text-slate-200"
                                     placeholder="Password"
                                     required
                                 />
@@ -123,7 +123,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="group relative w-full py-4 mt-4 overflow-hidden rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="group relative w-full h-[60px] text-lg mt-4 overflow-hidden rounded-[16px] bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             <div className="relative z-10 flex items-center justify-center gap-2">
                                 {isSubmitting ? 'Authenticating...' : 'Enter System'}
@@ -133,7 +133,7 @@ const Login = () => {
                         </button>
                     </form>
 
-                    <p className="text-center mt-10 text-xs font-medium text-slate-600 dark:text-slate-500">
+                    <p className="text-center mt-7 text-sm font-medium text-slate-600 dark:text-slate-500">
                         Restricted Access. Secured by <span className="text-indigo-600 dark:text-indigo-400">DPMS AI</span>
                     </p>
                 </div>
