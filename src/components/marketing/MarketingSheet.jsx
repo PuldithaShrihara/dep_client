@@ -22,8 +22,11 @@ const AutoResizeTextarea = ({ value, onChange, onBlur, placeholder, className, d
 
     useEffect(() => {
         if (textareaRef.current && value) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+            // Prevent layout thrashing during typing by skipping external resize if focused
+            if (document.activeElement !== textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+                textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+            }
         }
     }, [value]);
 
@@ -977,7 +980,7 @@ const MarketingSheet = ({
                 </div>
             </div>
 
-            <div className="w-full bg-slate-50 dark:bg-white/[0.01] pb-10 overflow-x-auto">
+            <div className="w-full bg-slate-50 dark:bg-white/[0.01] pb-10 overflow-x-auto overscroll-x-contain" style={{ overflowAnchor: 'none', WebkitOverflowScrolling: 'touch' }}>
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">
