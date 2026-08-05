@@ -471,8 +471,8 @@ const PlanDashboard = ({
                                                     )}
                                                 </div>
 
-                                                <div className="flex-1 min-w-0 relative">
-                                                    <div className="flex items-center gap-3 mb-1">
+                                                <div className="flex-1 min-w-0 relative flex flex-wrap items-center gap-x-8 gap-y-3">
+                                                    <div className="flex items-center gap-3 min-w-[120px]">
                                                         <h4 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-indigo-400 transition-colors">
                                                             {product.name}
                                                         </h4>
@@ -483,14 +483,15 @@ const PlanDashboard = ({
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-6 mt-2">
-                                                        <div>
-                                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Monthly Budget</p>
-                                                            <p className="text-sm font-bold text-slate-300">{(product.monthlyBudget !== null && product.monthlyBudget !== '') ? product.monthlyBudget : 'Not set'}</p>
+                                                    
+                                                    <div className="flex items-center gap-6 flex-wrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Monthly Budget:</span>
+                                                            <span className="text-sm font-bold text-slate-300">{(product.monthlyBudget !== null && product.monthlyBudget !== '') ? product.monthlyBudget : 'Not set'}</span>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Monthly Target</p>
-                                                            <p className="text-sm font-bold text-slate-300">{(product.monthlyTarget !== null && product.monthlyTarget !== '') ? product.monthlyTarget : 'Not set'}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Monthly Target:</span>
+                                                            <span className="text-sm font-bold text-slate-300">{(product.monthlyTarget !== null && product.monthlyTarget !== '') ? product.monthlyTarget : 'Not set'}</span>
                                                         </div>
                                                     </div>
                                                 </div>
