@@ -691,9 +691,9 @@ const MarketingSheet = ({
         }
     };
 
-    const currentProduct = filterProduct ? initialProducts?.find(p => p.name === filterProduct) : null;
-    const currentProductId = currentProduct?._id;
-
+    const currentProductMatches = filterProduct && initialProducts ? initialProducts.filter(p => p.name && String(p.name).trim().toLowerCase() === String(filterProduct).trim().toLowerCase()) : [];
+    const currentProduct = currentProductMatches.length > 0 ? currentProductMatches[currentProductMatches.length - 1] : null;
+    const currentProductId = currentProduct ? currentProduct._id : null;
     // Dedicated Product Metrics State
     const [metrics, setMetrics] = useState({ monthlyBudget: '', monthlyTarget: '' });
     const [metricSaveStatus, setMetricSaveStatus] = useState('idle');
@@ -747,7 +747,7 @@ const MarketingSheet = ({
                         setMetricSaveStatus('saved');
                         setTimeout(() => setMetricSaveStatus('idle'), 2000);
                     }).catch(err => {
-                        console.error('Failed to save metrics', err);
+                        console.error('Failed to save metrics:', err.response?.status, err.response?.data?.message || err.message);
                         setMetricSaveStatus('error');
                         // Retain value on error as required
                     });
