@@ -240,7 +240,20 @@ const MarketingSheet = ({
     }).map(row => ({ ...row })));
 
     const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState('idle');
     const [collapsedMains, setCollapsedMains] = useState({});
+    const autoSaveTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (autoSaveTimeoutRef.current || saveStatus === 'saving' || saveStatus === 'error') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [saveStatus]);
 
     const toggleCollapse = (id) => {
         setCollapsedMains(prev => ({
@@ -253,6 +266,7 @@ const MarketingSheet = ({
         if (isNew || !planId) return;
         isAutoSavingRef.current = true;
         setSaving(true);
+        setSaveStatus('saving');
         try {
             const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
                 tasks: tasksToSave.filter(t => 
@@ -266,9 +280,18 @@ const MarketingSheet = ({
             }, {
                 headers: { 'x-auth-token': localStorage.getItem('token') }
             });
+            
+            setSaveStatus('saved');
             if (onSuccess) onSuccess(res.data);
+            setTimeout(() => setSaveStatus('idle'), 3000);
+            
+            // Allow parent state to sync before we re-enable overwriting
+            setTimeout(() => {
+                isAutoSavingRef.current = false;
+            }, 1000);
         } catch (err) {
             console.error('Auto-save failed:', err);
+            setSaveStatus('error');
             isAutoSavingRef.current = false;
         } finally {
             setSaving(false);
@@ -551,9 +574,24 @@ const MarketingSheet = ({
             }
 
             next[index] = updatedTask;
-            if (key === 'done' || key === 'status' || key === 'priority') {
+            
+            const immediateSaveKeys = ['done', 'status', 'priority', 'marketingChannel', 'startDate', 'endDate'];
+            if (immediateSaveKeys.includes(key)) {
+                if (autoSaveTimeoutRef.current) {
+                    clearTimeout(autoSaveTimeoutRef.current);
+                    autoSaveTimeoutRef.current = null;
+                }
                 setTimeout(() => handleAutoSave(next), 0);
+            } else {
+                if (autoSaveTimeoutRef.current) {
+                    clearTimeout(autoSaveTimeoutRef.current);
+                }
+                autoSaveTimeoutRef.current = setTimeout(() => {
+                    handleAutoSave(next);
+                    autoSaveTimeoutRef.current = null;
+                }, 1000);
             }
+            
             return next;
         });
     };
@@ -913,10 +951,17 @@ const MarketingSheet = ({
                     )}
                         {!readOnly && (
                             <>
+                                {saveStatus !== 'idle' && (
+                                    <div className="ml-auto mr-2 flex items-center gap-2">
+                                        {saveStatus === 'saving' && <span className="text-xs font-bold text-slate-500 animate-pulse">Saving...</span>}
+                                        {saveStatus === 'saved' && <span className="text-xs font-bold text-emerald-500 flex items-center gap-1"><CheckCircle size={12} /> Saved</span>}
+                                        {saveStatus === 'error' && <span className="text-xs font-bold text-red-500">Save failed</span>}
+                                    </div>
+                                )}
                                 <button 
                                     onClick={handleSave}
                                     disabled={saving}
-                                    className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all font-bold text-xs"
+                                    className={`${saveStatus === 'idle' ? 'ml-auto' : ''} flex items-center gap-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all font-bold text-xs`}
                                 >
                                     <CheckCircle size={12} /> {saving ? 'Saving...' : 'Save'}
                                 </button>
