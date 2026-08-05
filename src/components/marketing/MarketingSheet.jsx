@@ -651,7 +651,7 @@ const MarketingSheet = ({
     };
 
     return (
-        <div className="flex flex-col min-h-full w-full min-w-max bg-white dark:bg-[#0a0f1d] rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
+        <div className="flex flex-col min-h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
             {!filterProduct && (
                 <Header 
                     title="Marketing Department" 
@@ -932,7 +932,7 @@ const MarketingSheet = ({
                 </div>
             </div>
 
-            <div className="w-full bg-slate-50 dark:bg-white/[0.01] pb-10">
+            <div className="w-full bg-slate-50 dark:bg-white/[0.01] pb-10 overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-max table-fixed">
                     <thead className="sticky top-0 z-20 bg-[#d97706]">
                         <tr className="divide-x divide-white/10">
