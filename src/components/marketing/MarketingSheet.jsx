@@ -177,6 +177,7 @@ const MarketingSheet = ({
     initialYear = new Date().getFullYear(), 
     initialTarget = '', 
     initialDescription = '',
+    initialProductMetrics = [],
     filterProduct = null, // New prop for filtering
     readOnly = false
 }) => {
@@ -185,7 +186,8 @@ const MarketingSheet = ({
         month: initialMonth,
         year: initialYear,
         target: initialTarget,
-        description: initialDescription
+        description: initialDescription,
+        productMetrics: initialProductMetrics
     });
     const [activeTab, setActiveTab] = useState('table');
     const [filterChannel, setFilterChannel] = useState('All Channels');
@@ -207,7 +209,8 @@ const MarketingSheet = ({
                     month: initialMonth || '',
                     year: initialYear || new Date().getFullYear(),
                     target: initialTarget || '',
-                    description: initialDescription || ''
+                    description: initialDescription || '',
+                    productMetrics: initialProductMetrics || []
                 });
                 setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(10).fill({
                     product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
@@ -218,7 +221,7 @@ const MarketingSheet = ({
                 lastSyncedTasksRef.current = initialTasks;
             }
         }
-    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialTasks, isNew]);
+    }, [planId, initialTitle, initialMonth, initialYear, initialTarget, initialDescription, initialProductMetrics, initialTasks, isNew]);
 
     const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : Array(10).fill({
         product: '',
@@ -691,6 +694,39 @@ const MarketingSheet = ({
         }
     };
 
+    const currentProduct = filterProduct ? initialProducts?.find(p => p.name === filterProduct) : null;
+    const currentProductId = currentProduct?._id;
+    const currentProductMetrics = (planData.productMetrics || []).find(m => m.productId === currentProductId) || { monthlyBudget: '', monthlyTarget: '' };
+
+    const handleProductMetricChange = (field, value) => {
+        if (!currentProductId) return;
+        setPlanData(prev => {
+            const metrics = [...(prev.productMetrics || [])];
+            const index = metrics.findIndex(m => m.productId === currentProductId);
+            if (index >= 0) {
+                metrics[index] = { ...metrics[index], [field]: value };
+            } else {
+                metrics.push({ productId: currentProductId, monthlyBudget: '', monthlyTarget: '', [field]: value });
+            }
+            return { ...prev, productMetrics: metrics };
+        });
+
+        if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+        }
+        autoSaveTimeoutRef.current = setTimeout(() => {
+            if (!readOnly && planId) {
+                handleAutoSave(tasks);
+            }
+        }, 1000);
+    };
+
+    const handleProductMetricBlur = () => {
+        if (!readOnly && planId) {
+            handleAutoSave(tasks);
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-full bg-white dark:bg-[#0a0f1d] rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
             {!filterProduct && (
@@ -863,6 +899,42 @@ const MarketingSheet = ({
                             <div className="text-center">
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Pending</p>
                                 <h3 className="text-3xl font-black text-amber-400 leading-none">{filteredStats.inProgress}</h3>
+                            </div>
+                            <div className="w-px h-10 bg-white/10" />
+                            <div className="text-center group">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Monthly Budget</p>
+                                {readOnly ? (
+                                    <h3 className="text-3xl font-black text-white leading-none">
+                                        {currentProductMetrics.monthlyBudget || 'Not set'}
+                                    </h3>
+                                ) : (
+                                    <input 
+                                        type="text"
+                                        placeholder="Not set"
+                                        value={currentProductMetrics.monthlyBudget}
+                                        onChange={(e) => handleProductMetricChange('monthlyBudget', e.target.value)}
+                                        onBlur={handleProductMetricBlur}
+                                        className="w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b border-transparent hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl"
+                                    />
+                                )}
+                            </div>
+                            <div className="w-px h-10 bg-white/10" />
+                            <div className="text-center group">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Monthly Target</p>
+                                {readOnly ? (
+                                    <h3 className="text-3xl font-black text-white leading-none">
+                                        {currentProductMetrics.monthlyTarget || 'Not set'}
+                                    </h3>
+                                ) : (
+                                    <input 
+                                        type="text"
+                                        placeholder="Not set"
+                                        value={currentProductMetrics.monthlyTarget}
+                                        onChange={(e) => handleProductMetricChange('monthlyTarget', e.target.value)}
+                                        onBlur={handleProductMetricBlur}
+                                        className="w-28 bg-transparent text-center text-3xl font-black text-white leading-none border-b border-transparent hover:border-white/20 focus:border-indigo-500 focus:outline-none transition-colors placeholder:text-white/20 placeholder:text-2xl"
+                                    />
+                                )}
                             </div>
                         </div>
 

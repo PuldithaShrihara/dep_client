@@ -50,13 +50,16 @@ const PlanDashboard = ({
         if (plan.products && plan.products.length > 0) {
             plan.products.forEach(p => {
                 const key = String(p.name).trim().toLowerCase();
+                const metrics = (plan.productMetrics || []).find(m => m.productId === p._id) || {};
                 productMap[key] = {
                     name: p.name,
                     category: p.category || 'Campaign',
                     sumPct: 0,
                     count: 0,
                     overdueTasks: 0,
-                    image: p.image || p.imageUrl || null
+                    image: p.image || p.imageUrl || null,
+                    monthlyBudget: metrics.monthlyBudget || '',
+                    monthlyTarget: metrics.monthlyTarget || ''
                 };
             });
         }
@@ -451,7 +454,7 @@ const PlanDashboard = ({
                                                 </div>
 
                                                 <div className="flex-1 min-w-0 relative">
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 mb-1">
                                                         <h4 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-indigo-400 transition-colors">
                                                             {product.name}
                                                         </h4>
@@ -461,6 +464,16 @@ const PlanDashboard = ({
                                                                 {product.overdueTasks} Overdue
                                                             </span>
                                                         )}
+                                                    </div>
+                                                    <div className="flex items-center gap-6 mt-2">
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Monthly Budget</p>
+                                                            <p className="text-sm font-bold text-slate-300">{product.monthlyBudget || 'Not set'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Monthly Target</p>
+                                                            <p className="text-sm font-bold text-slate-300">{product.monthlyTarget || 'Not set'}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
 
