@@ -576,6 +576,31 @@ const MarketingSheet = ({
                 updatedTask[key] = value;
             }
 
+            if (key === 'startDate' || key === 'endDate') {
+                if (updatedTask.startDate && updatedTask.endDate) {
+                    const [sYear, sMonth, sDay] = updatedTask.startDate.split('-');
+                    const [eYear, eMonth, eDay] = updatedTask.endDate.split('-');
+                    
+                    if (sYear && sMonth && sDay && eYear && eMonth && eDay) {
+                        const start = Date.UTC(parseInt(sYear, 10), parseInt(sMonth, 10) - 1, parseInt(sDay, 10));
+                        const end = Date.UTC(parseInt(eYear, 10), parseInt(eMonth, 10) - 1, parseInt(eDay, 10));
+                        
+                        if (end < start) {
+                            alert("End Date cannot be earlier than Start Date");
+                            updatedTask.duration = '';
+                        } else {
+                            const diffTime = Math.abs(end - start);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                            updatedTask.duration = diffDays === 1 ? '1 day' : `${diffDays} days`;
+                        }
+                    } else {
+                        updatedTask.duration = '';
+                    }
+                } else {
+                    updatedTask.duration = '';
+                }
+            }
+
             next[index] = updatedTask;
             
             const immediateSaveKeys = ['done', 'status', 'priority', 'marketingChannel', 'startDate', 'endDate'];
@@ -1348,7 +1373,7 @@ const MarketingSheet = ({
                                                         value={task[col.key]}
                                                         onChange={(e) => handleInputChange(idx, col.key, e.target.value)}
                                                         onBlur={() => handleAutoSave(tasks)}
-                                                        disabled={readOnly}
+                                                        disabled={readOnly || col.key === 'duration'}
                                                         className={`${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
                                                     />
                                                 )}
