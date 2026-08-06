@@ -974,7 +974,7 @@ const MarketingSheet = ({
                                     </h3>
                                 ) : (
                                     <input 
-                                        type="number"
+                                        type="text"
                                         placeholder="Not set"
                                         value={metrics.monthlyBudget === null ? '' : metrics.monthlyBudget}
                                         onChange={(e) => handleProductMetricChange('monthlyBudget', e.target.value)}
