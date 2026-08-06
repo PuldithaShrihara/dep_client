@@ -519,7 +519,7 @@ const MarketingSheet = ({
         { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-32' },
         { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-16' },
         { key: 'owner', label: 'Responsibility', icon: <User size={14} />, width: 'w-28' },
-        { key: 'duration', label: 'Duration', icon: <Clock size={14} />, width: 'w-16' },
+        { key: 'duration', label: 'Duration', icon: <Clock size={14} />, width: 'w-32' },
         { key: 'startDate', label: 'Start Date', icon: <Calendar size={14} />, width: 'w-28' },
         { key: 'endDate', label: 'End Date', icon: <Calendar size={14} />, width: 'w-28' },
         { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-28' },
@@ -586,11 +586,11 @@ const MarketingSheet = ({
                         const end = Date.UTC(parseInt(eYear, 10), parseInt(eMonth, 10) - 1, parseInt(eDay, 10));
                         
                         if (end < start) {
-                            alert("End Date cannot be earlier than Start Date");
+                            alert("End date must be after start date.");
                             updatedTask.duration = '';
                         } else {
                             const diffTime = Math.abs(end - start);
-                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                             updatedTask.duration = diffDays === 1 ? '1 day' : `${diffDays} days`;
                         }
                     } else {
