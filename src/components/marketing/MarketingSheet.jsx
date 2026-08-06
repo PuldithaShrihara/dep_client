@@ -514,6 +514,7 @@ const MarketingSheet = ({
 
     const columns = useMemo(() => [
         { key: 'product', label: filterProduct ? 'Campaign / Subtask' : 'Product', icon: <ChevronDown size={14} />, width: filterProduct ? 'w-80' : 'w-40' },
+        { key: 'expectedOutcome', label: 'Budget', icon: <Target size={14} />, width: 'w-32' },
         { key: 'marketingChannel', label: 'Channel', icon: <ChevronDown size={14} />, width: 'w-28' },
         { key: 'mainGoal', label: 'Main Goal', icon: <ChevronDown size={14} />, width: 'w-32' },
         { key: 'done', label: 'Done', icon: <CheckSquare size={14} />, width: 'w-16' },
@@ -523,7 +524,6 @@ const MarketingSheet = ({
         { key: 'endDate', label: 'End Date', icon: <Calendar size={14} />, width: 'w-28' },
         { key: 'status', label: 'Status', icon: <Flag size={14} />, width: 'w-28' },
         { key: 'priority', label: 'Priority', icon: <MoreHorizontal size={14} />, width: 'w-20' },
-        { key: 'attachments', label: 'Attachments', icon: <File size={14} />, width: 'w-28' },
         { key: 'notes', label: 'Notes', icon: <FileText size={14} />, width: 'w-40' },
         { key: 'completedTime', label: 'Date Completed', icon: <Clock size={14} />, width: 'w-28' },
         { key: 'description', label: 'Description', icon: <FileText size={14} />, width: 'w-40' },
