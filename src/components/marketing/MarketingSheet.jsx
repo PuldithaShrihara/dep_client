@@ -191,6 +191,8 @@ const MarketingSheet = ({
     const [filterChannel, setFilterChannel] = useState('All Channels');
     const [filterStatus, setFilterStatus] = useState('All Status');
 
+    const generateId = () => 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
     const lastSyncedTasksRef = useRef(null);
     const isAutoSavingRef = useRef(false);
 
@@ -209,12 +211,53 @@ const MarketingSheet = ({
                     target: initialTarget || '',
                     description: initialDescription || ''
                 });
-                setTasks(initialTasks && initialTasks.length > 0 ? initialTasks : Array(10).fill({
-                    product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
-                    description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
-                    startDate: '', endDate: '', notes: '', completedBy: '',
-                    completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
-                }).map(row => ({ ...row })));
+                setTasks(prevTasks => {
+                    const serverTasks = initialTasks || [];
+                    if (serverTasks.length === 0 && prevTasks.length > 0 && prevTasks.some(t => t._id || t._localId)) {
+                        return prevTasks;
+                    }
+                    
+                    const merged = [];
+                    let serverIdx = 0;
+                    
+                    for (let localIdx = 0; localIdx < prevTasks.length; localIdx++) {
+                        const localTask = prevTasks[localIdx];
+                        const serverTask = serverTasks[serverIdx];
+                        
+                        if (serverTask) {
+                            if (localTask._id && localTask._id === serverTask._id) {
+                                merged.push({ ...serverTask, ...localTask, _id: serverTask._id });
+                                serverIdx++;
+                            } else if (!localTask._id && localTask._localId) {
+                                merged.push({ ...serverTask, ...localTask, _id: serverTask._id });
+                                serverIdx++;
+                            } else {
+                                merged.push({ ...serverTask, ...localTask });
+                                serverIdx++;
+                            }
+                        } else {
+                            merged.push(localTask);
+                        }
+                    }
+                    
+                    while (serverIdx < serverTasks.length) {
+                        merged.push(serverTasks[serverIdx]);
+                        serverIdx++;
+                    }
+                    
+                    // Ensure at least one blank row if completely empty
+                    if (merged.length === 0) {
+                        return Array(10).fill(null).map(() => ({
+                            _localId: generateId(),
+                            product: '', mediaType: '', marketingChannel: '', mainGoal: '', done: false,
+                            description: '', outcome: '', owner: '', status: 'planning', priority: 'Medium',
+                            startDate: '', endDate: '', notes: '', completedBy: '',
+                            completedTime: '', reportTo: '', expectedOutcome: '', duration: '', attachments: ''
+                        }));
+                    }
+                    
+                    return merged;
+                });
                 lastSyncedTasksRef.current = initialTasks;
             }
         }
@@ -240,7 +283,7 @@ const MarketingSheet = ({
         expectedOutcome: '',
         duration: '',
         attachments: ''
-    }).map(row => ({ ...row })));
+    }).map(row => ({ ...row, _localId: generateId() })));
 
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState('idle');
@@ -272,13 +315,7 @@ const MarketingSheet = ({
         setSaveStatus('saving');
         try {
             const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
-                tasks: tasksToSave.filter(t => 
-                    t.product?.trim() || 
-                    t.description?.trim() || 
-                    t.mainGoal?.trim() || 
-                    t.mediaType?.trim() ||
-                    t._isSubtask
-                ),
+                tasks: tasksToSave,
                 ...planData
             }, {
                 headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -310,7 +347,7 @@ const MarketingSheet = ({
                         isAutoSavingRef.current = true;
                         setSaving(true);
                         axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
-                            tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim() || t.mediaType?.trim() || t._isSubtask),
+                            tasks: tasks,
                             ...next
                         }, {
                             headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -334,7 +371,7 @@ const MarketingSheet = ({
             isAutoSavingRef.current = true;
             setSaving(true);
             axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
-                tasks: tasks.filter(t => t.product?.trim() || t.description?.trim() || t.mainGoal?.trim() || t.mediaType?.trim() || t._isSubtask),
+                tasks: tasks,
                 ...planData
             }, {
                 headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -360,6 +397,7 @@ const MarketingSheet = ({
 
         const parentTask = tasks[idx];
         const newRow = {
+            _localId: generateId(),
             product: '', 
             assets: parentTask.assets || parentTask.product || '',
             mediaType: '', marketingChannel: '', mainGoal: '', done: false,
@@ -626,6 +664,7 @@ const MarketingSheet = ({
 
     const addRow = () => {
         const newTasks = [...tasks, {
+            _localId: generateId(),
             product: '', 
             assets: filterProduct || '', // Link to parent product
             mediaType: '', marketingChannel: '', mainGoal: '', done: false,
@@ -679,13 +718,7 @@ const MarketingSheet = ({
             if (isNew) {
                 const res = await axios.post(`${API_ORIGIN}/api/plans`, {
                     ...planData,
-                    tasks: tasks.filter(t => 
-                        t.product?.trim() || 
-                        t.description?.trim() || 
-                        t.mainGoal?.trim() || 
-                        t.mediaType?.trim() ||
-                        t._isSubtask
-                    ),
+                    tasks: tasks,
                     department: deptId
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -694,13 +727,7 @@ const MarketingSheet = ({
                 if (onSuccess) onSuccess(res.data);
             } else {
                 const res = await axios.put(`${API_ORIGIN}/api/plans/${planId}/tasks`, {
-                    tasks: tasks.filter(t => 
-                        t.product?.trim() || 
-                        t.description?.trim() || 
-                        t.mainGoal?.trim() || 
-                        t.mediaType?.trim() ||
-                        t._isSubtask
-                    ),
+                    tasks: tasks,
                     ...planData
                 }, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
@@ -1220,7 +1247,10 @@ const MarketingSheet = ({
                                 }
 
                                 return (
-                                    <tr key={idx} id={`task-row-${idx}`} className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : (isOverdue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}`}>
+                                    <tr 
+                                        key={task._id || task._localId || idx}
+                                        id={`task-row-${idx}`} 
+                                        className={`group transition-all duration-300 divide-x divide-slate-200 dark:divide-white/10 ${isCompleted ? 'bg-emerald-500/10' : (isOverdue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}`}>
                                         <td className={`p-1.5 text-center font-black transition-colors ${isCompleted ? 'bg-emerald-500/40 text-emerald-300' : (isSubtask ? 'bg-[#0f172a] text-slate-500' : 'bg-slate-900/60 text-slate-400')} w-12`}>
                                             <span className={isSubtask ? 'text-[11px] opacity-70' : 'text-[14px]'}>
                                                 {displayNumber}
